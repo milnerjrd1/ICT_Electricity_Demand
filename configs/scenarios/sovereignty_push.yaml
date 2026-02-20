@@ -1,0 +1,30 @@
+scenario_id: sovereignty_push
+label: "Sovereignty Push"
+family: sovereignty
+
+pue_improvement_rate: 0.015       # Moderate PUE improvement — sovereign infra less optimised
+utilisation_multiplier: 1.05      # Slightly higher utilisation as workloads repatriate
+ai_growth_rate: 0.20              # Same AI growth as baseline
+ai_kwh_per_eflop: 0.0012          # Less efficient — sovereign hardware less optimised
+
+avg_lifespan_multiplier: 1.0
+
+power_efficiency_factor: 1.0
+
+# Sovereignty push: workloads shift from hyperscale to sovereign/on-prem
+placement_shares:
+  hyperscale: 0.35
+  sovereign: 0.30
+  colocation: 0.22
+  on_premises: 0.10
+  edge: 0.03
+
+placement_share_delta:
+  hyperscale: -0.02               # Hyperscale loses share
+  sovereign: 0.025                # Sovereign cloud gains rapidly
+  colocation: 0.005
+  on_premises: -0.005
+  edge: -0.005
+
+# Repatriation impact: fraction of hyperscale workloads moved to sovereign by 2030
+repatriation_fraction_2030: 0.20

@@ -1,0 +1,173 @@
+"""Data centres electricity demand model module.
+
+Capacity-based approach with explicit AI workload separation and PUE trajectories.
+Formula:
+    it_power(geo, dc_type, t)    = installed_capacity_MW × utilisation_rate(dc_type, t)
+    total_power(geo, dc_type, t) = it_power × PUE(dc_type, t)
+    annual_kwh                   = total_power × 8760
+    ai_kwh(geo, t)               = ai_compute_demand(t) × kwh_per_compute_unit(t)
+
+Placement shares (hyperscale / sovereign / colo / on-prem / edge) applied per scenario.
+Monte Carlo uncertainty applied to PUE, utilisation, and AI growth rate for Tier 1.
+"""
+
+import logging
+import uuid
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
+from src.models.schema import OutputRow, make_stub_output, validate_output
+
+logger = logging.getLogger(__name__)
+
+HOURS_PER_YEAR = 8760.0
+
+DC_TYPES = ("hyperscale", "sovereign", "colocation", "on_premises", "edge")
+
+
+def run_datacentres_model(
+    gold_df: pd.DataFrame,
+    scenario_params: dict[str, Any],
+    run_id: str | None = None,
+    monte_carlo_iterations: int = 0,
+) -> pd.DataFrame:
+    """Run the data centres electricity demand model.
+
+    Args:
+        gold_df: Gold table DataFrame with columns:
+            geo, product (dc_type), year, installed_capacity_mw,
+            utilisation_rate, pue, ai_share, confidence_tier, source_ids.
+        scenario_params: Dict of scenario overrides including:
+            scenario_id, pue_improvement_rate, utilisation_multiplier,
+            ai_growth_rate, ai_kwh_per_eflop.
+        run_id: UUID string for this pipeline run. Generated if not provided.
+        monte_carlo_iterations: Number of MC iterations for Tier 1 geos (0 = deterministic).
+
+    Returns:
+        DataFrame conforming to OutputSchema with segment='datacentres'.
+    """
+    if run_id is None:
+        run_id = str(uuid.uuid4())
+
+    scenario_id = scenario_params.get("scenario_id", "baseline")
+    pue_improvement_rate = float(scenario_params.get("pue_improvement_rate", 0.0))
+    utilisation_multiplier = float(scenario_params.get("utilisation_multiplier", 1.0))
+    ai_growth_rate = float(scenario_params.get("ai_growth_rate", 0.0))
+
+    rows: list[OutputRow] = []
+
+    for _, row in gold_df.iterrows():
+        confidence_tier = int(row.get("confidence_tier", 2))
+        base_year = int(gold_df["year"].min())
+        years_elapsed = int(row["year"]) - base_year
+
+        effective_pue = max(1.01, row["pue"] * (1 - pue_improvement_rate) ** years_elapsed)
+        effective_utilisation = min(0.95, row["utilisation_rate"] * utilisation_multiplier)
+        effective_ai_share = min(1.0, row.get("ai_share", 0.0) * (1 + ai_growth_rate) ** years_elapsed)
+
+        it_power_mw = row["installed_capacity_mw"] * effective_utilisation
+        total_power_mw = it_power_mw * effective_pue
+        annual_kwh = total_power_mw * HOURS_PER_YEAR * 1000.0
+
+        if monte_carlo_iterations > 0 and confidence_tier == 1:
+            kwh_p10, kwh_p50, kwh_p90, uncertainty_band = _monte_carlo(
+                installed_capacity_mw=row["installed_capacity_mw"],
+                base_pue=row["pue"],
+                base_utilisation=row["utilisation_rate"],
+                pue_improvement_rate=pue_improvement_rate,
+                utilisation_multiplier=utilisation_multiplier,
+                years_elapsed=years_elapsed,
+                iterations=monte_carlo_iterations,
+            )
+        else:
+            uncertainty_band = _tier_to_uncertainty(confidence_tier)
+            kwh_p10 = annual_kwh * (1 - uncertainty_band)
+            kwh_p50 = annual_kwh
+            kwh_p90 = annual_kwh * (1 + uncertainty_band)
+
+        rows.append(
+            OutputRow(
+                geo=str(row["geo"]),
+                segment="datacentres",
+                product=str(row["product"]),
+                year=int(row["year"]),
+                kwh_estimate=annual_kwh,
+                kwh_p10=kwh_p10,
+                kwh_p50=kwh_p50,
+                kwh_p90=kwh_p90,
+                confidence_tier=confidence_tier,
+                uncertainty_band=uncertainty_band,
+                scenario_id=scenario_id,
+                run_id=run_id,
+                source_ids=list(row.get("source_ids", [])),
+            )
+        )
+
+    result = pd.DataFrame(rows)
+    logger.info("DC model produced %d rows for run_id=%s", len(result), run_id)
+    return validate_output(result, context="datacentres")
+
+
+def _monte_carlo(
+    installed_capacity_mw: float,
+    base_pue: float,
+    base_utilisation: float,
+    pue_improvement_rate: float,
+    utilisation_multiplier: float,
+    years_elapsed: int,
+    iterations: int = 1000,
+) -> tuple[float, float, float, float]:
+    """Run Monte Carlo simulation for DC electricity demand uncertainty.
+
+    Args:
+        installed_capacity_mw: Installed IT capacity in MW.
+        base_pue: Baseline PUE value.
+        base_utilisation: Baseline utilisation rate (0–1).
+        pue_improvement_rate: Annual PUE improvement rate.
+        utilisation_multiplier: Scenario utilisation multiplier.
+        years_elapsed: Years since base year.
+        iterations: Number of Monte Carlo iterations.
+
+    Returns:
+        Tuple of (kwh_p10, kwh_p50, kwh_p90, uncertainty_band).
+    """
+    rng = np.random.default_rng()
+
+    pue_samples = rng.triangular(
+        left=base_pue * 0.90,
+        mode=max(1.01, base_pue * (1 - pue_improvement_rate) ** years_elapsed),
+        right=base_pue * 1.10,
+        size=iterations,
+    )
+    pue_samples = np.maximum(1.01, pue_samples)
+
+    util_samples = rng.triangular(
+        left=base_utilisation * 0.80,
+        mode=min(0.95, base_utilisation * utilisation_multiplier),
+        right=min(0.98, base_utilisation * 1.20),
+        size=iterations,
+    )
+
+    kwh_samples = installed_capacity_mw * util_samples * pue_samples * HOURS_PER_YEAR * 1000.0
+
+    p10 = float(np.percentile(kwh_samples, 10))
+    p50 = float(np.percentile(kwh_samples, 50))
+    p90 = float(np.percentile(kwh_samples, 90))
+    uncertainty_band = (p90 - p10) / (2.0 * p50) if p50 > 0 else 0.20
+
+    return p10, p50, p90, uncertainty_band
+
+
+def _tier_to_uncertainty(confidence_tier: int) -> float:
+    """Map confidence tier to fractional uncertainty half-width.
+
+    Args:
+        confidence_tier: 1, 2, or 3.
+
+    Returns:
+        Fractional half-width (e.g. 0.10 = ±10%).
+    """
+    mapping = {1: 0.10, 2: 0.25, 3: 0.40}
+    return mapping.get(confidence_tier, 0.40)

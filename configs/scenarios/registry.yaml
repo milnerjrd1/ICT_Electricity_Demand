@@ -1,0 +1,42 @@
+scenarios:
+  - id: ai_base
+    family: ai_dc
+    label: "AI Base"
+    description: "Central AI compute growth trajectory. Hyperscale expansion at historical rates. PUE improves gradually."
+    color: "#3B82F6"
+
+  - id: ai_low
+    family: ai_dc
+    label: "AI Low"
+    description: "Conservative AI adoption. Efficiency gains outpace demand growth. DC electricity grows slowly."
+    color: "#10B981"
+
+  - id: ai_high
+    family: ai_dc
+    label: "AI High"
+    description: "Accelerated AI build-out. Hyperscale capacity doubles by 2030. PUE improvements lag demand."
+    color: "#EF4444"
+
+  - id: ai_stress
+    family: ai_dc
+    label: "AI Stress"
+    description: "Extreme AI demand scenario. Unconstrained compute growth. Grid constraints bind in key markets."
+    color: "#7C3AED"
+
+  - id: sovereignty_push
+    family: sovereignty
+    label: "Sovereignty Push"
+    description: "Workload repatriation to national/regional clouds. Higher PUE on-prem. Distributed DC footprint."
+    color: "#F59E0B"
+
+  - id: grid_constrained
+    family: grid
+    label: "Grid Constrained"
+    description: "Electricity grid constraints limit DC expansion in key markets. Demand growth slows after 2027."
+    color: "#6B7280"
+
+  - id: efficiency_breakthrough
+    family: efficiency
+    label: "Efficiency Breakthrough"
+    description: "Rapid PUE improvement and device efficiency gains. Demand growth significantly below baseline."
+    color: "#06B6D4"

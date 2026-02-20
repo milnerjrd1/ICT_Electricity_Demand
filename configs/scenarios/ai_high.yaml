@@ -1,0 +1,26 @@
+scenario_id: ai_high
+label: "AI High"
+family: ai_dc
+
+pue_improvement_rate: 0.01        # Slow PUE improvement (1% annual) — demand outpaces efficiency
+utilisation_multiplier: 1.15      # Higher utilisation driven by AI workloads
+ai_growth_rate: 0.40              # Aggressive AI compute growth (40% annual)
+ai_kwh_per_eflop: 0.0012          # Slightly less efficient per EFLOP (older hardware mix)
+
+avg_lifespan_multiplier: 0.95     # Slightly shorter device lifespans (faster refresh)
+
+power_efficiency_factor: 1.05     # Network equipment slightly less efficient (higher traffic)
+
+placement_shares:
+  hyperscale: 0.50
+  sovereign: 0.18
+  colocation: 0.22
+  on_premises: 0.07
+  edge: 0.03
+
+placement_share_delta:
+  hyperscale: 0.02                # Rapid hyperscale growth
+  sovereign: 0.01
+  colocation: -0.01
+  on_premises: -0.015
+  edge: -0.005

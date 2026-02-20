@@ -1,0 +1,26 @@
+scenario_id: ai_stress
+label: "AI Stress"
+family: ai_dc
+
+pue_improvement_rate: 0.005       # Minimal PUE improvement — demand far outpaces efficiency
+utilisation_multiplier: 1.30      # Very high utilisation
+ai_growth_rate: 0.70              # Extreme AI compute growth (70% annual)
+ai_kwh_per_eflop: 0.0015          # Less efficient per EFLOP (rapid hardware scaling)
+
+avg_lifespan_multiplier: 0.90     # Faster device refresh cycle
+
+power_efficiency_factor: 1.10     # Network equipment under strain
+
+placement_shares:
+  hyperscale: 0.55
+  sovereign: 0.20
+  colocation: 0.18
+  on_premises: 0.05
+  edge: 0.02
+
+placement_share_delta:
+  hyperscale: 0.03
+  sovereign: 0.015
+  colocation: -0.02
+  on_premises: -0.02
+  edge: -0.005

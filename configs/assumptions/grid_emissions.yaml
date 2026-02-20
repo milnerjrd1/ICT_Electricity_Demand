@@ -1,0 +1,160 @@
+# Grid Emission Factor Assumptions
+# Version: 2026-02
+# Source: IEA CO2 Emissions from Fuel Combustion 2024, Ember Global Electricity Review 2024
+# Units: kgCO2e per kWh
+
+# 2024 baseline values by geography
+# Annual trajectory: linear interpolation to 2035 target
+# Confidence tier reflects data availability
+
+geographies:
+  US:
+    ef_2024: 0.380
+    ef_2035_target: 0.220
+    confidence_tier: 1
+    source: "IEA 2024; EIA eGRID"
+
+  DE:
+    ef_2024: 0.350
+    ef_2035_target: 0.150
+    confidence_tier: 1
+    source: "IEA 2024; Umweltbundesamt; Destatis"
+
+  GB:
+    ef_2024: 0.210
+    ef_2035_target: 0.080
+    confidence_tier: 1
+    source: "IEA 2024; National Grid ESO"
+
+  IE:
+    ef_2024: 0.290
+    ef_2035_target: 0.100
+    confidence_tier: 1
+    source: "IEA 2024; SEAI"
+
+  NL:
+    ef_2024: 0.320
+    ef_2035_target: 0.130
+    confidence_tier: 1
+    source: "IEA 2024; CBS Netherlands"
+
+  SG:
+    ef_2024: 0.410
+    ef_2035_target: 0.280
+    confidence_tier: 1
+    source: "IEA 2024; EMA Singapore"
+
+  JP:
+    ef_2024: 0.440
+    ef_2035_target: 0.280
+    confidence_tier: 1
+    source: "IEA 2024; METI Japan"
+
+  AE:
+    ef_2024: 0.380
+    ef_2035_target: 0.200
+    confidence_tier: 2
+    source: "IEA 2024; DEWA reports"
+
+  CN:
+    ef_2024: 0.560
+    ef_2035_target: 0.380
+    confidence_tier: 1
+    source: "IEA 2024; China NEA"
+
+  IN:
+    ef_2024: 0.710
+    ef_2035_target: 0.480
+    confidence_tier: 2
+    source: "IEA 2024; CEA India"
+
+  AU:
+    ef_2024: 0.490
+    ef_2035_target: 0.250
+    confidence_tier: 1
+    source: "IEA 2024; AEMO"
+
+  CA:
+    ef_2024: 0.130
+    ef_2035_target: 0.060
+    confidence_tier: 1
+    source: "IEA 2024; Canada NEB"
+
+  SE:
+    ef_2024: 0.040
+    ef_2035_target: 0.020
+    confidence_tier: 1
+    source: "IEA 2024; Energimyndigheten"
+
+  PL:
+    ef_2024: 0.720
+    ef_2035_target: 0.450
+    confidence_tier: 1
+    source: "IEA 2024; URE Poland"
+
+  FR:
+    ef_2024: 0.060
+    ef_2035_target: 0.030
+    confidence_tier: 1
+    source: "IEA 2024; RTE France"
+
+  KR:
+    ef_2024: 0.420
+    ef_2035_target: 0.280
+    confidence_tier: 1
+    source: "IEA 2024; KEPCO"
+
+  BR:
+    ef_2024: 0.090
+    ef_2035_target: 0.060
+    confidence_tier: 2
+    source: "IEA 2024; ANEEL Brazil"
+
+  ZA:
+    ef_2024: 0.900
+    ef_2035_target: 0.650
+    confidence_tier: 2
+    source: "IEA 2024; Eskom"
+
+  SA:
+    ef_2024: 0.620
+    ef_2035_target: 0.380
+    confidence_tier: 2
+    source: "IEA 2024; Saudi Aramco/SEC"
+
+  MY:
+    ef_2024: 0.590
+    ef_2035_target: 0.380
+    confidence_tier: 2
+    source: "IEA 2024; Suruhanjaya Tenaga"
+
+  # Tier 3 regional aggregates — proxy from weighted average of constituent countries
+  LATAM-REST:
+    ef_2024: 0.280
+    ef_2035_target: 0.200
+    confidence_tier: 3
+    source: "IEA regional proxy"
+
+  MENA-REST:
+    ef_2024: 0.550
+    ef_2035_target: 0.380
+    confidence_tier: 3
+    source: "IEA regional proxy"
+
+  SSA-REST:
+    ef_2024: 0.650
+    ef_2035_target: 0.500
+    confidence_tier: 3
+    source: "IEA regional proxy"
+
+  SEA-REST:
+    ef_2024: 0.580
+    ef_2035_target: 0.380
+    confidence_tier: 3
+    source: "IEA regional proxy"
+
+  CEE-REST:
+    ef_2024: 0.550
+    ef_2035_target: 0.350
+    confidence_tier: 3
+    source: "IEA regional proxy"

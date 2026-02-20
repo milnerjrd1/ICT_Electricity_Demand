@@ -1,0 +1,31 @@
+scenario_id: ai_base
+label: "AI Base"
+family: ai_dc
+
+# Data centre parameters
+pue_improvement_rate: 0.02        # 2% annual PUE improvement
+utilisation_multiplier: 1.0       # No change to baseline utilisation
+ai_growth_rate: 0.20              # 20% annual AI compute demand growth
+ai_kwh_per_eflop: 0.001           # kWh per EFLOP (baseline efficiency)
+
+# Device parameters
+avg_lifespan_multiplier: 1.0      # No change to device lifespans
+
+# Network parameters
+power_efficiency_factor: 1.0      # No change to network equipment efficiency
+
+# Placement shares (fraction of DC workload by type) — 2024 baseline
+placement_shares:
+  hyperscale: 0.45
+  sovereign: 0.15
+  colocation: 0.25
+  on_premises: 0.10
+  edge: 0.05
+
+# Placement share trajectory (annual delta, applied from 2024)
+placement_share_delta:
+  hyperscale: 0.01                # Hyperscale grows slightly
+  sovereign: 0.005                # Sovereign cloud grows slightly
+  colocation: -0.005              # Colo shrinks slightly
+  on_premises: -0.01              # On-prem declines
+  edge: 0.0

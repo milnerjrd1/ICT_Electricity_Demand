@@ -1,0 +1,64 @@
+# Network Assumptions
+# Version: 2026-02
+# Source: ITU statistics, GSMA Intelligence, BNetzA, Ofcom, FCC, Ericsson Mobility Report
+
+equipment_types:
+  5g_base_station:
+    power_per_unit_w:
+      baseline: 1500.0
+      range: [900.0, 2500.0]
+      distribution: triangular
+      annual_improvement: 0.03
+      rationale: "Ericsson/Nokia specs; GSMA energy efficiency data; wide range by vendor/config"
+      confidence_tier: 2
+    utilisation_factor:
+      baseline: 0.60
+      range: [0.30, 0.85]
+      distribution: triangular
+      rationale: "Traffic-driven; varies significantly by market maturity"
+      confidence_tier: 2
+
+  4g_base_station:
+    power_per_unit_w:
+      baseline: 800.0
+      range: [500.0, 1200.0]
+      distribution: triangular
+      annual_improvement: 0.02
+      rationale: "Established technology; Ericsson/Huawei published specs"
+      confidence_tier: 1
+    utilisation_factor:
+      baseline: 0.70
+      range: [0.50, 0.90]
+      distribution: triangular
+      rationale: "Mature networks; regulator data available for Tier 1"
+      confidence_tier: 1
+
+  fixed_broadband_cpe:
+    power_per_unit_w:
+      baseline: 8.0
+      range: [4.0, 15.0]
+      distribution: triangular
+      annual_improvement: 0.02
+      rationale: "ENERGY STAR CPE data; Ofcom/BNetzA household surveys"
+      confidence_tier: 2
+    utilisation_factor:
+      baseline: 0.90
+      range: [0.80, 0.98]
+      distribution: triangular
+      rationale: "CPE always-on; high utilisation factor"
+      confidence_tier: 1
+
+  core_network:
+    power_per_unit_w:
+      baseline: 50000.0
+      range: [20000.0, 100000.0]
+      distribution: triangular
+      annual_improvement: 0.04
+      rationale: "Proxy from operator disclosures; high uncertainty; Tier 3"
+      confidence_tier: 3
+    utilisation_factor:
+      baseline: 0.65
+      range: [0.40, 0.85]
+      distribution: triangular
+      rationale: "Core network utilisation; limited public data"
+      confidence_tier: 3

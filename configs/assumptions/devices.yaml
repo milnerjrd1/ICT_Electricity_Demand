@@ -1,0 +1,99 @@
+# Device Assumptions
+# Version: 2026-02
+# Source: Eurostat ICT surveys, ENERGY STAR test data, IEA Technology Reports
+
+products:
+  laptop:
+    avg_lifespan_years:
+      baseline: 5.0
+      range: [3.0, 7.0]
+      distribution: triangular
+      rationale: "Eurostat ICT survey; IDC replacement cycle data"
+      confidence_tier: 2
+    power_states_w:
+      active: 15.0
+      idle: 5.0
+      sleep: 1.0
+      off: 0.1
+    hours_per_year:
+      active: 2000
+      idle: 2000
+      sleep: 3000
+      off: 1760
+    confidence_tier: 2
+
+  desktop:
+    avg_lifespan_years:
+      baseline: 6.0
+      range: [4.0, 9.0]
+      distribution: triangular
+      rationale: "Longer replacement cycle than laptops; enterprise refresh data"
+      confidence_tier: 2
+    power_states_w:
+      active: 80.0
+      idle: 20.0
+      sleep: 2.0
+      off: 0.5
+    hours_per_year:
+      active: 2000
+      idle: 1500
+      sleep: 2500
+      off: 2760
+    confidence_tier: 2
+
+  smartphone:
+    avg_lifespan_years:
+      baseline: 3.0
+      range: [2.0, 4.5]
+      distribution: triangular
+      rationale: "GSMA device lifecycle data; shorter replacement cycle"
+      confidence_tier: 2
+    power_states_w:
+      active: 3.0
+      idle: 0.5
+      sleep: 0.1
+      off: 0.01
+    hours_per_year:
+      active: 1500
+      idle: 3000
+      sleep: 3500
+      off: 760
+    confidence_tier: 2
+
+  tablet:
+    avg_lifespan_years:
+      baseline: 4.0
+      range: [2.5, 6.0]
+      distribution: triangular
+      rationale: "Proxy from laptop/smartphone; limited direct data"
+      confidence_tier: 3
+    power_states_w:
+      active: 8.0
+      idle: 2.0
+      sleep: 0.5
+      off: 0.05
+    hours_per_year:
+      active: 1200
+      idle: 2000
+      sleep: 4000
+      off: 1560
+    confidence_tier: 3
+
+  monitor:
+    avg_lifespan_years:
+      baseline: 7.0
+      range: [5.0, 10.0]
+      distribution: triangular
+      rationale: "Longer lifespan; ENERGY STAR data"
+      confidence_tier: 2
+    power_states_w:
+      active: 25.0
+      idle: 5.0
+      sleep: 0.5
+      off: 0.1
+    hours_per_year:
+      active: 2000
+      idle: 500
+      sleep: 2000
+      off: 4260
+    confidence_tier: 2

@@ -1,0 +1,43 @@
+# Windsurf Cascade — Persistent Coding Rules
+# These rules apply to every session in this project.
+
+## Imports
+- All imports must be at the top of the file, never inline
+- Use absolute imports from `src/` (e.g. `from src.models.schema import OutputRow`)
+
+## Types
+- Type hints required on ALL function signatures (parameters and return types)
+- Use `TypedDict` for DataFrame column contracts; reference `src/models/schema.py`
+- Prefer `pd.DataFrame` with column validation over untyped dicts
+
+## Style
+- ruff formatting enforced — line length 100
+- No magic numbers; all constants in `configs/` YAML files
+- Use `logging` module, never `print()`
+- Docstrings on all public functions: one-line summary + Args + Returns
+
+## Testing
+- Every new model function gets at least one pytest test before the PR
+- Tests live in `tests/` mirroring `src/` structure
+- Use fixtures from `tests/conftest.py` — never hardcode test data inline
+- Plausibility checks must be automated, not manual
+
+## Data / DuckDB
+- All gold table writes go through `src/data/gold_writer.py`
+- Every gold table must have: `source_id`, `ingestion_date`, `version`, `run_id` columns
+- Never write raw files to `data/gold/` directly — always via the writer
+
+## Schema Contract
+- NEVER change column names or types in `src/models/schema.py` without a migration
+- All model functions must return DataFrames validated against `OutputSchema`
+- `confidence_tier` must be 1, 2, or 3 — never null
+- `run_id` must be a UUID string — never null
+
+## Streamlit
+- `app/` imports from `src/` only — no model logic in Streamlit pages
+- Use `st.cache_data` for all expensive computations
+- All charts use Plotly — no matplotlib in the app
+
+## Git
+- Commit messages: `type(scope): description` (e.g. `feat(dc-model): add PUE trajectory`)
+- Never commit to main directly — use feature branches

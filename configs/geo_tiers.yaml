@@ -1,0 +1,91 @@
+# Geography Tiering Configuration
+# Tiering driven by DC presence and AI significance, not just data availability.
+# Version: 2026-02
+
+tier1_dc_hotspots:
+  description: "Largest hyperscale + sovereign DC markets; AI compute concentration; sufficient public data"
+  geographies:
+    - iso: US
+      name: "United States"
+      calibration_anchor: false
+    - iso: DE
+      name: "Germany"
+      calibration_anchor: true
+      note: "Primary calibration anchor — richest public data (Borderstep, BNetzA, Destatis)"
+    - iso: GB
+      name: "United Kingdom"
+      calibration_anchor: false
+    - iso: IE
+      name: "Ireland"
+      calibration_anchor: false
+      note: "Major hyperscale hub; high DC density relative to GDP"
+    - iso: NL
+      name: "Netherlands"
+      calibration_anchor: false
+      note: "AMS-IX hub; significant hyperscale presence"
+    - iso: SG
+      name: "Singapore"
+      calibration_anchor: false
+      note: "APAC DC hub; government DC moratorium lifted 2022"
+    - iso: JP
+      name: "Japan"
+      calibration_anchor: false
+    - iso: AE
+      name: "United Arab Emirates"
+      calibration_anchor: false
+      note: "Sovereign AI push; hyperscale expansion"
+
+tier1_emerging_dc:
+  description: "Rapid DC build-out; AI sovereignty push; proxy-scalable from anchor"
+  geographies:
+    - iso: CN
+      name: "China"
+    - iso: IN
+      name: "India"
+    - iso: AU
+      name: "Australia"
+    - iso: CA
+      name: "Canada"
+    - iso: SE
+      name: "Sweden / Nordics"
+      note: "Represents SE + NO + FI + DK aggregate; green energy advantage"
+    - iso: PL
+      name: "Poland"
+      note: "Fastest-growing DC market in CEE"
+
+tier2_significant_ict:
+  description: "Material ICT demand; DC growth; wider uncertainty bands"
+  geographies:
+    - iso: FR
+      name: "France"
+    - iso: KR
+      name: "South Korea"
+    - iso: BR
+      name: "Brazil"
+    - iso: ZA
+      name: "South Africa"
+    - iso: SA
+      name: "Saudi Arabia"
+      note: "NEOM and Vision 2030 DC investment"
+    - iso: MY
+      name: "Malaysia"
+      note: "Johor DC corridor; significant hyperscale investment"
+
+tier3_global_remainder:
+  description: "Proxy-based; confidence tier 3; widest bands; ensures global totals close"
+  geographies:
+    - iso: LATAM-REST
+      name: "Latin America (ex-Brazil)"
+      constituent_countries: ["MX", "AR", "CO", "CL", "PE"]
+    - iso: MENA-REST
+      name: "MENA (ex-UAE, ex-Saudi Arabia)"
+      constituent_countries: ["EG", "IL", "QA", "KW", "TR"]
+    - iso: SSA-REST
+      name: "Sub-Saharan Africa (ex-South Africa)"
+      constituent_countries: ["NG", "KE", "ET", "GH"]
+    - iso: SEA-REST
+      name: "Southeast Asia (ex-Singapore, ex-Malaysia)"
+      constituent_countries: ["ID", "TH", "VN", "PH"]
+    - iso: CEE-REST
+      name: "Central & Eastern Europe (ex-Poland)"
+      constituent_countries: ["CZ", "HU", "RO", "SK", "UA"]

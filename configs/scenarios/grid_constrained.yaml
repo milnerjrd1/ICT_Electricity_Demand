@@ -1,0 +1,30 @@
+scenario_id: grid_constrained
+label: "Grid Constrained"
+family: grid
+
+pue_improvement_rate: 0.025       # Faster PUE improvement driven by grid pressure
+utilisation_multiplier: 0.85      # Lower utilisation — grid constraints limit expansion
+ai_growth_rate: 0.15              # AI growth slows due to power availability
+ai_kwh_per_eflop: 0.0009          # Efficiency improves under grid pressure
+
+avg_lifespan_multiplier: 1.05     # Longer device lifespans (slower refresh)
+
+power_efficiency_factor: 0.90     # Network equipment more efficient under grid pressure
+
+placement_shares:
+  hyperscale: 0.40
+  sovereign: 0.15
+  colocation: 0.28
+  on_premises: 0.12
+  edge: 0.05
+
+placement_share_delta:
+  hyperscale: 0.005
+  sovereign: 0.005
+  colocation: 0.0
+  on_premises: -0.005
+  edge: -0.005
+
+# Grid constraint onset year — DC expansion slows after this year in constrained markets
+grid_constraint_onset_year: 2027
+constrained_geos: ["IE", "NL", "GB", "SG"]
