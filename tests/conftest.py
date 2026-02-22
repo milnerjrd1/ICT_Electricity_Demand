@@ -152,6 +152,127 @@ def electricity_prices_germany() -> pd.DataFrame:
     })
 
 
+# ── Study-aligned v2 fixtures ─────────────────────────────────────────────────
+
+@pytest.fixture
+def germany_devices_v2_gold() -> pd.DataFrame:
+    """Germany devices gold table for the study-aligned v2 model.
+
+    Uses four-state power profile and application_area column.
+    Includes warm-up years 2015-2019 for stable stock-flow.
+    """
+    warmup_years = list(range(2015, 2020))
+    test_years = list(range(2020, 2026))
+    all_years = warmup_years + test_years
+    rows = []
+    for year in all_years:
+        for product_group, area, power_off, power_ready, power_med, power_high, h_off, h_ready, h_med, h_high, lifespan in [
+            ("laptop_hh",    "households",   0.1,  5.0, 15.0, 35.0, 1760, 3000, 2500,  500, 5.0),
+            ("desktop_hh",   "households",   0.5, 20.0, 80.0, 120.0, 2000, 2500, 2500, 1760, 6.0),
+            ("smartphone_hh","households",   0.0,  0.5,  3.0,   5.0, 4000, 2000, 1500, 1260, 3.0),
+            ("pc_notebook_wp","workplace",   0.1,  5.0, 15.0,  35.0,  760, 2000, 3000, 3000, 4.0),
+            ("pos_terminal", "public_spaces",0.1,  2.0,  8.0,  12.0, 1760, 2000, 3000, 2000, 5.0),
+        ]:
+            rows.append({
+                "geo": "DE",
+                "product_group": product_group,
+                "application_area": area,
+                "year": year,
+                "shipments": 3_000_000.0,
+                "avg_lifespan_years": lifespan,
+                "lifespan_std_years": lifespan * 0.2,
+                "power_off_w": power_off,
+                "power_ready_w": power_ready,
+                "power_active_medium_w": power_med,
+                "power_active_high_w": power_high,
+                "hours_off": float(h_off),
+                "hours_ready": float(h_ready),
+                "hours_active_medium": float(h_med),
+                "hours_active_high": float(h_high),
+                "confidence_tier": 1,
+                "source_ids": ["eurostat_2024", "energy_star"],
+            })
+    return pd.DataFrame(rows)
+
+
+@pytest.fixture
+def germany_telecom_gold() -> pd.DataFrame:
+    """Germany telecom networks gold table for the port-unit channel model (Format A)."""
+    years = list(range(2020, 2026))
+    rows = []
+    for year in years:
+        rows.append({
+            "geo": "DE",
+            "year": year,
+            "mobile_subscribers": 80_000_000.0,
+            "fixed_subscribers": 35_000_000.0,
+            "confidence_tier": 1,
+            "source_ids": ["bnetzA_2024", "itu_2024"],
+        })
+    return pd.DataFrame(rows)
+
+
+@pytest.fixture
+def germany_dc_arch_gold() -> pd.DataFrame:
+    """Germany data centres gold table for the architecture-centric v2 model.
+
+    Uses CPU/storage/port unit counts rather than installed_capacity_mw.
+    """
+    years = list(range(2020, 2026))
+    rows = []
+    for year in years:
+        rows.extend([
+            {
+                "geo": "DE", "product_group": "cpu_unit", "year": year,
+                "unit_count": 500_000.0, "power_per_unit_w": 250.0,
+                "utilisation": 0.55, "pue": 1.40,
+                "confidence_tier": 1, "source_ids": ["borderstep_2023"],
+            },
+            {
+                "geo": "DE", "product_group": "hdd_unit", "year": year,
+                "unit_count": 2_000_000.0, "power_per_unit_w": 6.0,
+                "confidence_tier": 2, "source_ids": ["borderstep_2023"],
+            },
+            {
+                "geo": "DE", "product_group": "ssd_unit", "year": year,
+                "unit_count": 1_000_000.0, "power_per_unit_w": 2.0,
+                "confidence_tier": 2, "source_ids": ["borderstep_2023"],
+            },
+            {
+                "geo": "DE", "product_group": "dc_port_unit", "year": year,
+                "unit_count": 3_000_000.0, "power_per_unit_w": 1.5,
+                "utilisation": 0.60,
+                "confidence_tier": 2, "source_ids": ["borderstep_2023"],
+            },
+        ])
+    return pd.DataFrame(rows)
+
+
+@pytest.fixture
+def grid_ef_germany_v2() -> pd.DataFrame:
+    """Germany grid EF table with 2024 anchor year for carbon_v2 dispatch."""
+    years = list(range(2020, 2026))
+    efs   = [0.400, 0.385, 0.370, 0.360, 0.350, 0.340]
+    return pd.DataFrame({
+        "geo": ["DE"] * len(years),
+        "year": years,
+        "grid_ef_kgco2e_per_kwh": efs,
+    })
+
+
+@pytest.fixture
+def scenario_v2_params() -> dict:
+    """Scenario params compatible with all v2 model modules."""
+    return {
+        "scenario_id": "ai_base",
+        "pue_improvement_rate": 0.02,
+        "utilisation_multiplier": 1.0,
+        "avg_lifespan_multiplier": 1.0,
+        "power_efficiency_factor": 1.0,
+        "ai_growth_rate": 0.15,
+    }
+
+
 @pytest.fixture
 def multi_geo_dc_gold() -> pd.DataFrame:
     """Stub multi-geography DC gold table for scale testing."""
