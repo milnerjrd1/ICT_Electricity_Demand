@@ -1,4 +1,24 @@
 scenarios:
+  # ── Grid mix scenarios (from 2025 onward) ──────────────────────────────────
+  - id: grid_mix_reference
+    family: grid_mix
+    label: "Grid Mix — Reference"
+    description: "Moderate decarbonisation consistent with current national policies. Default grid scenario."
+    color: "#6B7280"
+
+  - id: grid_mix_ambitious
+    family: grid_mix
+    label: "Grid Mix — Ambitious"
+    description: "Accelerated decarbonisation aligned with 1.5°C / IEA Net Zero 2050 pathway."
+    color: "#10B981"
+
+  - id: grid_mix_fossil
+    family: grid_mix
+    label: "Grid Mix — Fossil Persistence"
+    description: "Slow decarbonisation; fossil fuel persistence in key markets. High-emissions risk scenario."
+    color: "#EF4444"
+
+  # ── AI / DC demand scenarios ───────────────────────────────────────────────
   - id: ai_base
     family: ai_dc
     label: "AI Base"

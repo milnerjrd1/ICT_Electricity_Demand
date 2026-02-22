@@ -1,0 +1,36 @@
+# Grid Mix Scenario: Fossil Persistence
+# Historical grid emission factors up to 2024 (fixed).
+# From 2025 onward: slow decarbonisation; fossil fuel persistence.
+
+scenario_id: grid_mix_fossil
+label: "Grid Mix — Fossil Persistence"
+family: grid_mix
+description: >
+  Fossil persistence electricity mix scenario. Historical emission factors up to 2024.
+  From 2025: slow decarbonisation; delayed renewable build-out; continued fossil
+  dependence in key markets. Represents a high-emissions risk scenario.
+
+grid_scenario_id: fossil
+
+historical_anchor_year: 2024
+
+# Global annual EF reduction rate from 2025 (~1% per year average)
+annual_ef_reduction_rate: 0.010
+
+geo_overrides:
+  DE:
+    annual_ef_reduction_rate: 0.015   # Delayed coal exit
+  GB:
+    annual_ef_reduction_rate: 0.020   # Slower offshore wind
+  SE:
+    annual_ef_reduction_rate: 0.005   # Already near-zero; minimal change
+  PL:
+    annual_ef_reduction_rate: 0.008   # Coal persists
+  US:
+    annual_ef_reduction_rate: 0.012   # Slower clean energy transition
+  CN:
+    annual_ef_reduction_rate: 0.015   # Coal fleet continues operating
+  IN:
+    annual_ef_reduction_rate: 0.010   # Slow renewable ramp
+  ZA:
+    annual_ef_reduction_rate: 0.005   # Grid crisis; coal persists

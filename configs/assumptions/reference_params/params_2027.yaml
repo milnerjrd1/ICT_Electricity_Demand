@@ -1,0 +1,293 @@
+# Reference-year parameter set: 2027
+# Applies to years 2027–2031 (projected)
+# Source: Fraunhofer Green ICT @ FMD study projections; IEA efficiency trajectories
+
+reference_year: 2027
+
+product_groups:
+
+  tv_large:
+    avg_lifespan_years: 9.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.2
+    power_ready_w: 0.4
+    power_active_medium_w: 100.0
+    power_active_high_w: 118.0
+    hours_off: 4000
+    hours_ready: 2260
+    hours_active_medium: 2000
+    hours_active_high: 500
+    confidence_tier: 3
+
+  tv_medium:
+    avg_lifespan_years: 9.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.2
+    power_ready_w: 0.4
+    power_active_medium_w: 68.0
+    power_active_high_w: 80.0
+    hours_off: 4000
+    hours_ready: 2260
+    hours_active_medium: 2000
+    hours_active_high: 500
+    confidence_tier: 3
+
+  tv_small:
+    avg_lifespan_years: 9.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.15
+    power_ready_w: 0.3
+    power_active_medium_w: 38.0
+    power_active_high_w: 46.0
+    hours_off: 4000
+    hours_ready: 2260
+    hours_active_medium: 2000
+    hours_active_high: 500
+    confidence_tier: 3
+
+  laptop_hh:
+    avg_lifespan_years: 5.5
+    lifespan_std_years: 1.0
+    power_off_w: 0.05
+    power_ready_w: 3.5
+    power_active_medium_w: 10.0
+    power_active_high_w: 25.0
+    hours_off: 1760
+    hours_ready: 3000
+    hours_active_medium: 2500
+    hours_active_high: 500
+    confidence_tier: 3
+
+  desktop_hh:
+    avg_lifespan_years: 7.0
+    lifespan_std_years: 1.2
+    power_off_w: 0.3
+    power_ready_w: 15.0
+    power_active_medium_w: 65.0
+    power_active_high_w: 120.0
+    hours_off: 2760
+    hours_ready: 1500
+    hours_active_medium: 3000
+    hours_active_high: 500
+    confidence_tier: 3
+
+  smartphone_hh:
+    avg_lifespan_years: 3.5
+    lifespan_std_years: 0.7
+    power_off_w: 0.005
+    power_ready_w: 0.3
+    power_active_medium_w: 2.0
+    power_active_high_w: 3.5
+    hours_off: 760
+    hours_ready: 3500
+    hours_active_medium: 3500
+    hours_active_high: 1000
+    confidence_tier: 3
+
+  tablet_hh:
+    avg_lifespan_years: 5.0
+    lifespan_std_years: 1.0
+    power_off_w: 0.03
+    power_ready_w: 1.5
+    power_active_medium_w: 6.0
+    power_active_high_w: 9.0
+    hours_off: 1560
+    hours_ready: 4000
+    hours_active_medium: 2500
+    hours_active_high: 700
+    confidence_tier: 3
+
+  printer_hh:
+    avg_lifespan_years: 7.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.3
+    power_ready_w: 3.5
+    power_active_medium_w: 12.0
+    power_active_high_w: 12.0
+    hours_off: 7000
+    hours_ready: 1700
+    hours_active_medium: 60
+    hours_active_high: 0
+    confidence_tier: 3
+
+  monitor_hh:
+    avg_lifespan_years: 8.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.05
+    power_ready_w: 0.3
+    power_active_medium_w: 18.0
+    power_active_high_w: 22.0
+    hours_off: 4260
+    hours_ready: 2000
+    hours_active_medium: 2000
+    hours_active_high: 500
+    confidence_tier: 3
+
+  home_router:
+    avg_lifespan_years: 7.0
+    lifespan_std_years: 1.0
+    power_off_w: 0.0
+    power_ready_w: 6.0
+    power_active_medium_w: 7.0
+    power_active_high_w: 8.0
+    hours_off: 0
+    hours_ready: 6000
+    hours_active_medium: 2000
+    hours_active_high: 760
+    confidence_tier: 3
+
+  audio_device:
+    avg_lifespan_years: 4.0
+    lifespan_std_years: 1.0
+    power_off_w: 0.05
+    power_ready_w: 1.0
+    power_active_medium_w: 3.5
+    power_active_high_w: 6.0
+    hours_off: 4000
+    hours_ready: 3000
+    hours_active_medium: 1500
+    hours_active_high: 260
+    confidence_tier: 3
+
+  wearable:
+    avg_lifespan_years: 3.0
+    lifespan_std_years: 0.6
+    power_off_w: 0.0
+    power_ready_w: 0.03
+    power_active_medium_w: 0.2
+    power_active_high_w: 0.35
+    hours_off: 2000
+    hours_ready: 5000
+    hours_active_medium: 1500
+    hours_active_high: 260
+    confidence_tier: 3
+
+  pc_notebook_wp:
+    avg_lifespan_years: 5.0
+    lifespan_std_years: 1.0
+    power_off_w: 0.05
+    power_ready_w: 5.0
+    power_active_medium_w: 12.0
+    power_active_high_w: 28.0
+    hours_off: 3760
+    hours_ready: 2000
+    hours_active_medium: 2500
+    hours_active_high: 500
+    confidence_tier: 3
+
+  printer_mfd_wp:
+    avg_lifespan_years: 7.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.3
+    power_ready_w: 7.0
+    power_active_medium_w: 320.0
+    power_active_high_w: 320.0
+    hours_off: 5760
+    hours_ready: 2800
+    hours_active_medium: 200
+    hours_active_high: 0
+    confidence_tier: 3
+
+  monitor_wp:
+    avg_lifespan_years: 8.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.05
+    power_ready_w: 0.3
+    power_active_medium_w: 18.0
+    power_active_high_w: 22.0
+    hours_off: 5760
+    hours_ready: 500
+    hours_active_medium: 2000
+    hours_active_high: 500
+    confidence_tier: 3
+
+  telephone_wp:
+    avg_lifespan_years: 8.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.0
+    power_ready_w: 1.5
+    power_active_medium_w: 2.5
+    power_active_high_w: 2.5
+    hours_off: 0
+    hours_ready: 7260
+    hours_active_medium: 1500
+    hours_active_high: 0
+    confidence_tier: 3
+
+  lan_port_wp:
+    avg_lifespan_years: 10.0
+    lifespan_std_years: 2.0
+    power_off_w: 0.0
+    power_ready_w: 0.3
+    power_active_medium_w: 0.7
+    power_active_high_w: 1.5
+    hours_off: 0
+    hours_ready: 6000
+    hours_active_medium: 2000
+    hours_active_high: 760
+    confidence_tier: 3
+
+  pos_terminal:
+    avg_lifespan_years: 8.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.3
+    power_ready_w: 10.0
+    power_active_medium_w: 22.0
+    power_active_high_w: 22.0
+    hours_off: 3760
+    hours_ready: 3500
+    hours_active_medium: 1500
+    hours_active_high: 0
+    confidence_tier: 3
+
+  atm_ticket_machine:
+    avg_lifespan_years: 12.0
+    lifespan_std_years: 2.0
+    power_off_w: 0.0
+    power_ready_w: 65.0
+    power_active_medium_w: 100.0
+    power_active_high_w: 100.0
+    hours_off: 0
+    hours_ready: 7260
+    hours_active_medium: 1500
+    hours_active_high: 0
+    confidence_tier: 3
+
+  digital_signage:
+    avg_lifespan_years: 7.0
+    lifespan_std_years: 1.5
+    power_off_w: 0.3
+    power_ready_w: 3.0
+    power_active_medium_w: 120.0
+    power_active_high_w: 145.0
+    hours_off: 2760
+    hours_ready: 500
+    hours_active_medium: 4000
+    hours_active_high: 1500
+    confidence_tier: 3
+
+  wifi_hotspot:
+    avg_lifespan_years: 6.0
+    lifespan_std_years: 1.0
+    power_off_w: 0.0
+    power_ready_w: 7.0
+    power_active_medium_w: 11.0
+    power_active_high_w: 15.0
+    hours_off: 0
+    hours_ready: 4000
+    hours_active_medium: 3500
+    hours_active_high: 1260
+    confidence_tier: 3
+
+  toll_system:
+    avg_lifespan_years: 15.0
+    lifespan_std_years: 2.0
+    power_off_w: 0.0
+    power_ready_w: 40.0
+    power_active_medium_w: 65.0
+    power_active_high_w: 65.0
+    hours_off: 0
+    hours_ready: 6000
+    hours_active_medium: 2760
+    hours_active_high: 0
+    confidence_tier: 3

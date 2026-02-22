@@ -1,0 +1,38 @@
+# Grid Mix Scenario: Ambitious
+# Historical grid emission factors up to 2024 (fixed).
+# From 2025 onward: accelerated decarbonisation (1.5°C-aligned trajectory).
+
+scenario_id: grid_mix_ambitious
+label: "Grid Mix — Ambitious"
+family: grid_mix
+description: >
+  Ambitious electricity mix scenario. Historical emission factors up to 2024.
+  From 2025: accelerated decarbonisation consistent with 1.5°C-aligned pathways
+  (IEA Net Zero by 2050). Rapid renewable build-out, coal phase-out by 2030 in OECD.
+
+grid_scenario_id: ambitious
+
+historical_anchor_year: 2024
+
+# Global annual EF reduction rate from 2025 (~6% per year average)
+annual_ef_reduction_rate: 0.060
+
+geo_overrides:
+  DE:
+    annual_ef_reduction_rate: 0.080   # Accelerated coal exit + offshore wind
+  GB:
+    annual_ef_reduction_rate: 0.090   # Near-zero grid by 2030 target
+  SE:
+    annual_ef_reduction_rate: 0.015   # Already near-zero
+  FR:
+    annual_ef_reduction_rate: 0.025   # Nuclear + renewables
+  PL:
+    annual_ef_reduction_rate: 0.070   # Rapid coal phase-out
+  US:
+    annual_ef_reduction_rate: 0.065   # IRA-driven clean energy build-out
+  CN:
+    annual_ef_reduction_rate: 0.055   # Accelerated renewables
+  IN:
+    annual_ef_reduction_rate: 0.045   # Aggressive solar build-out
+  ZA:
+    annual_ef_reduction_rate: 0.050   # Just Energy Transition

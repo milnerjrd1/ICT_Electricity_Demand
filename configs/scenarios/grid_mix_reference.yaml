@@ -1,0 +1,39 @@
+# Grid Mix Scenario: Reference
+# Historical grid emission factors up to 2024 (fixed).
+# From 2025 onward: moderate decarbonisation trajectory.
+# This is the central/reference scenario — matches current policy commitments.
+
+scenario_id: grid_mix_reference
+label: "Grid Mix — Reference"
+family: grid_mix
+description: >
+  Reference electricity mix scenario. Historical emission factors up to 2024.
+  From 2025: moderate decarbonisation consistent with current national policies.
+  Used as the default grid scenario when no override is specified.
+
+grid_scenario_id: reference
+
+# Historical anchor year (factors from grid_emissions.yaml used for years ≤ this)
+historical_anchor_year: 2024
+
+# Annual decarbonisation rate applied from 2025 onward (fractional reduction per year)
+# Applied multiplicatively to the 2024 baseline EF for each geography.
+# Reference: moderate policy trajectory (~3% per year average)
+annual_ef_reduction_rate: 0.030
+
+# Geography-specific overrides (optional; overrides the global rate)
+geo_overrides:
+  DE:
+    annual_ef_reduction_rate: 0.045   # Energiewende acceleration
+  GB:
+    annual_ef_reduction_rate: 0.055   # Rapid offshore wind build-out
+  SE:
+    annual_ef_reduction_rate: 0.010   # Already near-zero; marginal improvement
+  FR:
+    annual_ef_reduction_rate: 0.015   # Nuclear-heavy; already low
+  PL:
+    annual_ef_reduction_rate: 0.040   # Coal phase-out underway
+  IN:
+    annual_ef_reduction_rate: 0.025   # Renewable build-out but large base
+  CN:
+    annual_ef_reduction_rate: 0.030   # Rapid renewables but large coal fleet
