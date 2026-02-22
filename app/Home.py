@@ -8,10 +8,23 @@ import logging
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
-from src.models.schema import REQUIRED_COLUMNS, validate_output
 from app.stub_data import get_stub_dataframe
+from app.theme import (
+    AMBER,
+    CARD_BG,
+    CYAN,
+    MATRIX_GREEN,
+    NEON_RED,
+    SCENARIO_COLORS,
+    SEGMENT_COLORS,
+    TEXT_DIM,
+    apply_matrix_theme,
+    matrix_header,
+    matrix_kpi_card,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,18 +36,20 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.title("⚡ Global ICT Electricity Demand")
+apply_matrix_theme()
+
+# ── Header ────────────────────────────────────────────────────────────────────
+
 st.markdown(
-    """
-    A modular model and decision-support tool estimating ICT-driven electricity demand
-    by **geography × segment × product × year** — with emissions, cost overlays,
-    and explicit uncertainty quantification.
-    """
+    matrix_header(
+        "⚡ GLOBAL ICT ELECTRICITY DEMAND",
+        "Modular scenario model · geography × segment × product × year · P10/P50/P90 uncertainty",
+    ),
+    unsafe_allow_html=True,
 )
 
 st.info(
-    "**Status: Phase 0 — Scaffold complete.** "
-    "This view uses stub data. Real model outputs will appear as data loaders and model modules are built.",
+    "**PHASE 0 — STUB DATA** · Real model outputs will replace this as data loaders are built.",
     icon="🔧",
 )
 
@@ -50,7 +65,7 @@ df = load_data()
 
 # ── Sidebar filters ───────────────────────────────────────────────────────────
 
-st.sidebar.header("Filters")
+st.sidebar.markdown("## ⚙ FILTERS")
 
 all_scenarios = sorted(df["scenario_id"].unique())
 selected_scenario = st.sidebar.selectbox("Scenario", all_scenarios, index=0)
@@ -74,21 +89,44 @@ filtered = df[
 
 # ── KPI row ───────────────────────────────────────────────────────────────────
 
-col1, col2, col3, col4 = st.columns(4)
-
 latest_year = filtered["year"].max() if not filtered.empty else "—"
-total_twh = filtered[filtered["year"] == latest_year]["kwh_estimate"].sum() / 1e9 if not filtered.empty else 0.0
+total_twh = (
+    filtered[filtered["year"] == latest_year]["kwh_estimate"].sum() / 1e9
+    if not filtered.empty
+    else 0.0
+)
 dc_twh = (
-    filtered[(filtered["year"] == latest_year) & (filtered["segment"] == "datacentres")]["kwh_estimate"].sum() / 1e9
+    filtered[(filtered["year"] == latest_year) & (filtered["segment"] == "datacentres")][
+        "kwh_estimate"
+    ].sum()
+    / 1e9
     if not filtered.empty
     else 0.0
 )
 n_geos = filtered["geo"].nunique() if not filtered.empty else 0
+dc_share_str = f"{dc_twh / total_twh:.0%}" if total_twh > 0 else "—"
 
-col1.metric("Total ICT Electricity", f"{total_twh:,.0f} TWh", help=f"Year: {latest_year}")
-col2.metric("Data Centre Share", f"{dc_twh / total_twh:.0%}" if total_twh > 0 else "—", help="DC as % of total ICT")
-col3.metric("Geographies Covered", n_geos)
-col4.metric("Scenario", selected_scenario)
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+with kpi1:
+    st.markdown(
+        matrix_kpi_card("Total ICT Electricity", f"{total_twh:,.0f} TWh", f"Year: {latest_year}"),
+        unsafe_allow_html=True,
+    )
+with kpi2:
+    st.markdown(
+        matrix_kpi_card("Data Centre Share", dc_share_str, "% of total ICT", color=NEON_RED),
+        unsafe_allow_html=True,
+    )
+with kpi3:
+    st.markdown(
+        matrix_kpi_card("Geographies", str(n_geos), "countries / regions", color=CYAN),
+        unsafe_allow_html=True,
+    )
+with kpi4:
+    st.markdown(
+        matrix_kpi_card("Active Scenario", selected_scenario.replace("_", " ").upper(), "", color=AMBER),
+        unsafe_allow_html=True,
+    )
 
 st.divider()
 
@@ -109,72 +147,97 @@ if not filtered.empty:
         x="year",
         y="TWh",
         color="segment",
-        color_discrete_map={
-            "datacentres": "#EF4444",
-            "networks": "#3B82F6",
-            "devices": "#10B981",
-        },
+        color_discrete_map=SEGMENT_COLORS,
         labels={"TWh": "Electricity (TWh)", "year": "Year"},
-        title=f"ICT Electricity Demand — {selected_scenario}",
+        title=f"ICT Electricity Demand — {selected_scenario.replace('_', ' ').upper()}",
     )
+    fig.update_traces(line_width=2)
     fig.update_layout(hovermode="x unified", legend_title="Segment")
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.warning("No data for selected filters.")
 
-# ── Top geographies ───────────────────────────────────────────────────────────
+# ── Two-column lower section ──────────────────────────────────────────────────
 
-st.subheader(f"Top Geographies by ICT Electricity ({latest_year})")
+col_left, col_right = st.columns([3, 2])
 
-if not filtered.empty:
-    geo_agg = (
-        filtered[filtered["year"] == latest_year]
-        .groupby("geo")["kwh_estimate"]
-        .sum()
-        .reset_index()
-        .sort_values("kwh_estimate", ascending=False)
-        .head(15)
-    )
-    geo_agg["TWh"] = geo_agg["kwh_estimate"] / 1e9
+with col_left:
+    st.subheader(f"Top Geographies — {latest_year}")
 
-    fig2 = px.bar(
-        geo_agg,
-        x="TWh",
-        y="geo",
-        orientation="h",
-        color="TWh",
-        color_continuous_scale="Reds",
-        labels={"TWh": "Electricity (TWh)", "geo": "Geography"},
-        title=f"Top 15 Geographies — {latest_year}",
-    )
-    fig2.update_layout(yaxis={"categoryorder": "total ascending"}, coloraxis_showscale=False)
-    st.plotly_chart(fig2, use_container_width=True)
+    if not filtered.empty:
+        geo_agg = (
+            filtered[filtered["year"] == latest_year]
+            .groupby("geo")["kwh_estimate"]
+            .sum()
+            .reset_index()
+            .sort_values("kwh_estimate", ascending=False)
+            .head(15)
+        )
+        geo_agg["TWh"] = geo_agg["kwh_estimate"] / 1e9
 
-# ── Confidence tier breakdown ─────────────────────────────────────────────────
+        fig2 = px.bar(
+            geo_agg,
+            x="TWh",
+            y="geo",
+            orientation="h",
+            color="TWh",
+            color_continuous_scale=[[0, CARD_BG], [0.4, MATRIX_GREEN], [1.0, CYAN]],
+            labels={"TWh": "Electricity (TWh)", "geo": "Geography"},
+            title=f"Top 15 Geographies — {latest_year}",
+        )
+        fig2.update_layout(
+            yaxis={"categoryorder": "total ascending"},
+            coloraxis_showscale=False,
+        )
+        st.plotly_chart(fig2, use_container_width=True)
 
-st.subheader("Output Confidence Distribution")
+with col_right:
+    st.subheader("Confidence Distribution")
 
-if not filtered.empty:
-    tier_counts = filtered["confidence_tier"].value_counts().sort_index().reset_index()
-    tier_counts.columns = ["confidence_tier", "count"]
-    tier_counts["label"] = tier_counts["confidence_tier"].map(
-        {1: "Tier 1 — High", 2: "Tier 2 — Medium", 3: "Tier 3 — Low"}
-    )
+    if not filtered.empty:
+        tier_counts = (
+            filtered["confidence_tier"].value_counts().sort_index().reset_index()
+        )
+        tier_counts.columns = ["confidence_tier", "count"]
+        tier_counts["label"] = tier_counts["confidence_tier"].map(
+            {1: "Tier 1 — High", 2: "Tier 2 — Medium", 3: "Tier 3 — Low"}
+        )
 
-    fig3 = px.pie(
-        tier_counts,
-        values="count",
-        names="label",
-        color="confidence_tier",
-        color_discrete_map={1: "#10B981", 2: "#F59E0B", 3: "#EF4444"},
-        title="Rows by Confidence Tier",
-    )
-    st.plotly_chart(fig3, use_container_width=True)
+        fig3 = go.Figure(
+            go.Pie(
+                labels=tier_counts["label"],
+                values=tier_counts["count"],
+                hole=0.55,
+                marker=dict(
+                    colors=[
+                        MATRIX_GREEN if t == 1 else AMBER if t == 2 else NEON_RED
+                        for t in tier_counts["confidence_tier"]
+                    ],
+                    line=dict(color=CARD_BG, width=2),
+                ),
+                textfont=dict(color="#FFFFFF"),
+            )
+        )
+        fig3.update_layout(
+            title="Output Rows by Confidence Tier",
+            showlegend=True,
+            annotations=[
+                dict(
+                    text="CONFIDENCE",
+                    x=0.5,
+                    y=0.5,
+                    font_size=11,
+                    showarrow=False,
+                    font_color=TEXT_DIM,
+                )
+            ],
+        )
+        st.plotly_chart(fig3, use_container_width=True)
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 
 st.divider()
 st.caption(
-    "ICT Electricity Demand Model — Phase 0 Scaffold | "
-    "Navigate to Explorer, Scenarios, Confidence, or Export using the sidebar."
+    "ICT Electricity Demand Model — Phase 0 Scaffold · "
+    "Navigate via sidebar: Explorer · Scenarios · Confidence · Export"
 )

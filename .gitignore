@@ -18,8 +18,8 @@ data/staging/
 data/gold/
 data/outputs/
 
-# Streamlit
-.streamlit/
+# Streamlit — config.toml is tracked; secrets are not
+.streamlit/secrets.toml
 
 # IDE
 .vscode/

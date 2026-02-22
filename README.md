@@ -15,16 +15,32 @@ ICT-driven electricity demand globally by geography × segment × product × yea
 
 ## Quick Start
 
+### Enterprise React App (primary UI)
+
 ```bash
-# Install uv if not already installed
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install dependencies
+# Terminal 1 — Python backend (FastAPI)
 uv sync --extra dev
+source .venv/bin/activate
+uvicorn backend.api.main:app --reload --port 8000
 
-# Run the Streamlit app
+# Terminal 2 — React frontend (Vite)
+cd frontend
+npm install
+npm run dev
+# → http://localhost:5173
+```
+
+API docs available at **http://localhost:8000/api/v1/docs**
+
+### Legacy Streamlit app (fallback)
+
+```bash
 uv run streamlit run app/Home.py
+```
 
+### Tests & tooling
+
+```bash
 # Run tests
 uv run pytest
 
