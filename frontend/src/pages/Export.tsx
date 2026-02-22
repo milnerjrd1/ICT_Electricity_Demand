@@ -1,5 +1,5 @@
 import { Download, FileText, Table } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCreateRun, useRunStatus, useScenarios } from '../api/hooks';
 import { Button } from '../components/ui/Button';
 import { Card, KpiCard } from '../components/ui/Card';
@@ -9,12 +9,14 @@ import type { OutputRow, RunResult } from '../types/schema';
 function RunWatcher({ runId, onDone }: { runId: string; onDone: (r: RunResult) => void }) {
   const { data } = useRunStatus(runId);
   const called = useRef(false);
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; });
   useEffect(() => {
     if (data?.status === 'done' && data.result && !called.current) {
       called.current = true;
-      onDone(data.result);
+      onDoneRef.current(data.result);
     }
-  }, [data, onDone]);
+  }, [data]);
   return null;
 }
 
@@ -59,19 +61,26 @@ export function Export() {
   const [scenarioId, setScenarioId] = useState('ai_base');
   const [runId, setRunId] = useState<string | null>(null);
   const [result, setResult] = useState<RunResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [previewPage, setPreviewPage] = useState(0);
   const loaded = useRef(false);
 
   useEffect(() => {
     if (loaded.current) return;
     loaded.current = true;
-    createRun.mutate({ scenario_id: scenarioId, seed: 42 }, { onSuccess: (d) => setRunId(d.run_id) });
+    setIsLoading(true);
+    createRun.mutateAsync({ scenario_id: scenarioId, seed: 42 })
+      .then((d) => setRunId(d.run_id))
+      .catch(() => setIsLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleScenarioChange = (id: string) => {
+  const handleScenarioChange = useCallback((id: string) => {
     setScenarioId(id); setResult(null); setPreviewPage(0);
-    createRun.mutate({ scenario_id: id, seed: 42 }, { onSuccess: (d) => setRunId(d.run_id) });
-  };
+    setIsLoading(true);
+    createRun.mutateAsync({ scenario_id: id, seed: 42 })
+      .then((d) => setRunId(d.run_id))
+      .catch(() => setIsLoading(false));
+  }, [createRun]);
 
   const rows = result?.rows ?? [];
   const PAGE_SIZE = 50;
@@ -83,7 +92,7 @@ export function Export() {
   return (
     <div>
       <PageHeader title="EXPORT" subtitle="Download model outputs · CSV · filtered by scenario" accent="var(--accent-purple)" />
-      {runId && <RunWatcher runId={runId} onDone={setResult} />}
+      {runId && <RunWatcher runId={runId} onDone={(r) => { setResult(r); setIsLoading(false); }} />}
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', alignItems: 'flex-end' }}>
@@ -120,7 +129,7 @@ export function Export() {
               <Button
                 onClick={() => rows.length && downloadCsv(rowsToCsv(rows), `ict_demand_${scenarioId}_full.csv`)}
                 disabled={!rows.length}
-                loading={createRun.isPending}
+                loading={isLoading}
               >
                 <Download size={13} />
                 Download Full CSV ({rows.length.toLocaleString()} rows)
@@ -141,7 +150,7 @@ export function Export() {
                 variant="secondary"
                 onClick={() => rows.length && downloadCsv(rowsToCsv(rows, true), `ict_demand_${scenarioId}_summary.csv`)}
                 disabled={!rows.length}
-                loading={createRun.isPending}
+                loading={isLoading}
               >
                 <Download size={13} />
                 Download Summary CSV

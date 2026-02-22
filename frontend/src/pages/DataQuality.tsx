@@ -13,12 +13,14 @@ const TIER_META = {
 function RunWatcher({ runId, onDone }: { runId: string; onDone: (r: RunResult) => void }) {
   const { data } = useRunStatus(runId);
   const called = useRef(false);
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; });
   useEffect(() => {
     if (data?.status === 'done' && data.result && !called.current) {
       called.current = true;
-      onDone(data.result);
+      onDoneRef.current(data.result);
     }
-  }, [data, onDone]);
+  }, [data]);
   return null;
 }
 
@@ -34,7 +36,9 @@ export function DataQuality() {
   useEffect(() => {
     if (loaded.current) return;
     loaded.current = true;
-    createRun.mutate({ scenario_id: scenarioId, seed: 42 }, { onSuccess: (d) => setRunId(d.run_id) });
+    createRun.mutateAsync({ scenario_id: scenarioId, seed: 42 })
+      .then((d) => setRunId(d.run_id))
+      .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const yearRows: OutputRow[] = (result?.rows ?? []).filter((r) => r.year === year);
@@ -70,7 +74,7 @@ export function DataQuality() {
   return (
     <div>
       <PageHeader title="DATA QUALITY" subtitle="Confidence tiers · source coverage · uncertainty bands" accent="var(--accent-green)" />
-      {runId && <RunWatcher runId={runId} onDone={setResult} />}
+      {runId && <RunWatcher runId={runId} onDone={(r) => setResult(r)} />}
 
       {/* Controls */}
       <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', alignItems: 'center' }}>
@@ -78,7 +82,9 @@ export function DataQuality() {
           <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Scenario</label>
           <select value={scenarioId} onChange={(e) => {
             setScenarioId(e.target.value); setResult(null);
-            createRun.mutate({ scenario_id: e.target.value, seed: 42 }, { onSuccess: (d) => setRunId(d.run_id) });
+            createRun.mutateAsync({ scenario_id: e.target.value, seed: 42 })
+              .then((d) => setRunId(d.run_id))
+              .catch(() => {});
           }} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '6px',
             color: 'var(--text-primary)', padding: '7px 12px', fontSize: '12px', fontFamily: 'var(--font-sans)', cursor: 'pointer' }}>
             {(scenarioList ?? []).map((s) => <option key={s.id} value={s.id} style={{ background: 'var(--bg-elevated)' }}>{s.label}</option>)}

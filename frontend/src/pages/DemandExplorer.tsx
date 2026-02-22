@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
   CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
@@ -20,12 +20,14 @@ const ALL_GEOS = ['US', 'CN', 'DE', 'JP', 'GB', 'FR', 'IN', 'CA', 'AU', 'NL', 'I
 function RunWatcher({ runId, onDone }: { runId: string; onDone: (r: RunResult) => void }) {
   const { data } = useRunStatus(runId);
   const called = useRef(false);
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; });
   useEffect(() => {
     if (data?.status === 'done' && data.result && !called.current) {
       called.current = true;
-      onDone(data.result);
+      onDoneRef.current(data.result);
     }
-  }, [data, onDone]);
+  }, [data]);
   return null;
 }
 
@@ -38,21 +40,26 @@ export function DemandExplorer() {
   const [activeTab, setActiveTab] = useState<'map' | 'segment' | 'geo' | 'product'>('map');
   const [runId, setRunId] = useState<string | null>(null);
   const [result, setResult] = useState<RunResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const loaded = useRef(false);
 
   useEffect(() => {
     if (loaded.current) return;
     loaded.current = true;
-    createRun.mutate({ scenario_id: scenarioId, seed: 42 }, {
-      onSuccess: (d) => setRunId(d.run_id),
-    });
+    setIsLoading(true);
+    createRun.mutateAsync({ scenario_id: scenarioId, seed: 42 })
+      .then((d) => setRunId(d.run_id))
+      .catch(() => setIsLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleScenarioChange = (id: string) => {
+  const handleScenarioChange = useCallback((id: string) => {
     setScenarioId(id);
     setResult(null);
-    createRun.mutate({ scenario_id: id, seed: 42 }, { onSuccess: (d) => setRunId(d.run_id) });
-  };
+    setIsLoading(true);
+    createRun.mutateAsync({ scenario_id: id, seed: 42 })
+      .then((d) => setRunId(d.run_id))
+      .catch(() => setIsLoading(false));
+  }, [createRun]);
 
   const filteredRows: OutputRow[] = (result?.rows ?? []).filter((r) =>
     (selectedGeos.length === 0 || selectedGeos.includes(r.geo)) &&
@@ -62,7 +69,7 @@ export function DemandExplorer() {
   return (
     <div>
       <PageHeader title="DEMAND EXPLORER" subtitle="Drill down by geography · segment · product · year" accent="var(--accent-amber)" />
-      {runId && <RunWatcher runId={runId} onDone={setResult} />}
+      {runId && <RunWatcher runId={runId} onDone={(r) => { setResult(r); setIsLoading(false); }} />}
 
       <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '20px', alignItems: 'start' }}>
         {/* Sidebar filters */}
@@ -124,7 +131,7 @@ export function DemandExplorer() {
             ))}
           </div>
 
-          {createRun.isPending && !result && (
+          {isLoading && !result && (
             <Card style={{ padding: '60px', textAlign: 'center' }}>
               <div style={{ width: '32px', height: '32px', border: '3px solid var(--border)', borderTopColor: 'var(--accent-cyan)',
                 borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
