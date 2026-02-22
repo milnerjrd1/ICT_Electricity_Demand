@@ -23,13 +23,13 @@ export function Sidebar() {
         left: 0,
         display: 'flex',
         flexDirection: 'column',
-        padding: '16px 0',
+        padding: '20px 0 16px',
         zIndex: 90,
       }}
     >
-      <div style={{ padding: '0 12px 16px', borderBottom: '1px solid var(--border)', marginBottom: '8px' }}>
-        <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.12em', fontWeight: 600 }}>
-          NAVIGATION
+      <div style={{ padding: '0 16px 14px', borderBottom: '1px solid var(--border)', marginBottom: '8px' }}>
+        <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600, textTransform: 'uppercase' }}>
+          Navigation
         </span>
       </div>
 
@@ -42,16 +42,16 @@ export function Sidebar() {
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            padding: '10px 16px',
+            padding: '9px 16px',
             margin: '1px 8px',
             borderRadius: '6px',
             textDecoration: 'none',
             fontSize: '13px',
             fontWeight: isActive ? 600 : 400,
-            color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-            background: isActive ? 'rgba(0,212,255,0.08)' : 'transparent',
-            borderLeft: isActive ? '2px solid var(--accent-cyan)' : '2px solid transparent',
-            transition: 'all 0.15s ease',
+            color: isActive ? 'var(--accent-active)' : 'var(--text-secondary)',
+            background: isActive ? 'var(--accent-soft)' : 'transparent',
+            borderLeft: isActive ? `2px solid var(--accent)` : '2px solid transparent',
+            transition: 'background 0.12s ease, color 0.12s ease',
           })}
         >
           <Icon size={15} />
@@ -72,8 +72,8 @@ export function Sidebar() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
           <Database size={11} color="var(--accent-amber)" />
-          <span style={{ fontSize: '10px', color: 'var(--accent-amber)', fontWeight: 600, letterSpacing: '0.08em' }}>
-            PHASE 0
+          <span style={{ fontSize: '10px', color: 'var(--accent-amber)', fontWeight: 600, letterSpacing: '0.06em' }}>
+            Phase 0
           </span>
         </div>
         <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.5 }}>

@@ -13,22 +13,22 @@ interface ButtonProps {
 
 const VARIANTS = {
   primary: {
-    background: 'var(--accent-cyan)',
-    color: '#0A0E1A',
-    border: 'none',
-    hoverBg: '#33DDFF',
+    background: 'var(--accent)',
+    color: '#FFFFFF',
+    border: '1px solid var(--accent)',
+    hoverBg: 'var(--accent-hover)',
   },
   secondary: {
     background: 'transparent',
-    color: 'var(--accent-cyan)',
-    border: '1px solid var(--accent-cyan)',
-    hoverBg: 'rgba(0,212,255,0.08)',
+    color: 'var(--accent-active)',
+    border: '1px solid var(--accent)',
+    hoverBg: 'var(--accent-soft)',
   },
   danger: {
     background: 'transparent',
     color: 'var(--accent-red)',
     border: '1px solid var(--accent-red)',
-    hoverBg: 'rgba(239,68,68,0.08)',
+    hoverBg: 'rgba(218,41,28,0.06)',
   },
   ghost: {
     background: 'transparent',

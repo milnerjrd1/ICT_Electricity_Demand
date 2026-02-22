@@ -1,27 +1,109 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* ── Fonts ──────────────────────────────────────────────────────────────────
+   Open Sans: body + headings  |  JetBrains Mono: numbers, IDs, code
+   To swap fonts later: change the @import URL and update --font-sans below.
+   ─────────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
-:root {
-  --bg-base: #0A0E1A;
-  --bg-surface: #111827;
-  --bg-elevated: #1F2937;
-  --border: #1E3A5F;
-  --border-bright: #2D5A8E;
-  --accent-cyan: #00D4FF;
-  --accent-green: #10B981;
-  --accent-amber: #F59E0B;
-  --accent-red: #EF4444;
-  --accent-purple: #8B5CF6;
-  --text-primary: #F9FAFB;
-  --text-secondary: #9CA3AF;
-  --text-muted: #4B5563;
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-sans: 'Inter', system-ui, sans-serif;
+/* ── Tailwind v4 theme tokens ───────────────────────────────────────────────
+   All brand values live here. Changing a hex here propagates everywhere.
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Fonts */
+  --font-sans: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Brand core */
+  --color-brand-green:  #86BC24;
+  --color-brand-black:  #000000;
+  --color-brand-white:  #FFFFFF;
+
+  /* Accent semantics */
+  --color-accent:         #86BC24;
+  --color-accent-hover:   #76A820;
+  --color-accent-active:  #5F8F17;
+  --color-accent-soft:    #EAF4D8;
+
+  /* Secondary — teal */
+  --color-teal-500: #0097A9;
+  --color-teal-400: #00ABAB;
+  --color-teal-700: #007680;
+  --color-teal-900: #004F59;
+  --color-teal-tint: #DDEFE8;
+  --color-teal-soft: #9DD4CF;
+  --color-teal-mid:  #6FC2B4;
+
+  /* Secondary — blue */
+  --color-blue-200: #62B5E5;
+  --color-blue-300: #00A3E0;
+  --color-blue-500: #0076A8;
+  --color-blue-600: #012169;
+  --color-blue-700: #005587;
+  --color-blue-900: #041E42;
+  --color-blue-tint: #A0DCFF;
+
+  /* Cool grays */
+  --color-gray-200: #D0D0CE;
+  --color-gray-400: #BBBCBC;
+  --color-gray-600: #97999B;
+  --color-gray-700: #75787B;
+  --color-gray-900: #53565A;
+  --color-gray-alt:  #A7A8AA;
+  --color-gray-deep: #63666A;
+
+  /* Functional (alerts / heatmaps only — never decorative) */
+  --color-danger:  #DA291C;
+  --color-warning: #ED8B00;
+  --color-info:    #00A3E0;
+  --color-caution: #FFCD00;
 }
 
-* {
-  box-sizing: border-box;
+/* ── Semantic CSS variables ─────────────────────────────────────────────────
+   Components reference these — never raw hex values.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Fonts */
+  --font-sans: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Backgrounds */
+  --bg-base:     #F6F7F9;
+  --bg-surface:  #FFFFFF;
+  --bg-elevated: #FBFBFC;
+
+  /* Borders */
+  --border:        #E5E7EB;
+  --border-bright: #D0D0CE;
+
+  /* Accent (Deloitte green) */
+  --accent:        #86BC24;
+  --accent-hover:  #76A820;
+  --accent-active: #5F8F17;
+  --accent-soft:   #EAF4D8;
+
+  /* Legacy accent aliases — keeps existing component references working */
+  --accent-cyan:   #86BC24;
+  --accent-green:  #86BC24;
+  --accent-amber:  #ED8B00;
+  --accent-red:    #DA291C;
+  --accent-purple: #0076A8;
+
+  /* Text */
+  --text-primary:   #0F0B0B;
+  --text-secondary: #4B5563;
+  --text-muted:     #97999B;
+
+  /* Chart series (use in order) */
+  --chart-1: #0097A9;
+  --chart-2: #00A3E0;
+  --chart-3: #0076A8;
+  --chart-4: #75787B;
+  --chart-5: #007680;
+  --chart-accent: #86BC24;
 }
+
+/* ── Reset & base ───────────────────────────────────────────────────────────*/
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body, #root {
   margin: 0;
@@ -30,24 +112,22 @@ html, body, #root {
   background-color: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar */
+/* ── Scrollbar ──────────────────────────────────────────────────────────────*/
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-/* Mono data values */
+/* ── Utility classes ────────────────────────────────────────────────────────*/
 .mono { font-family: var(--font-mono); }
 
-/* Glow effects */
-.glow-cyan { text-shadow: 0 0 12px rgba(0, 212, 255, 0.6); }
-.glow-green { text-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
-
-/* Recharts overrides */
+/* ── Recharts overrides ─────────────────────────────────────────────────────*/
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
   stroke: var(--border) !important;
@@ -55,16 +135,29 @@ html, body, #root {
 .recharts-text { fill: var(--text-secondary) !important; }
 .recharts-tooltip-wrapper { outline: none; }
 
-/* Slider */
-input[type="range"] {
-  accent-color: var(--accent-cyan);
+/* ── Form controls ──────────────────────────────────────────────────────────*/
+input[type="range"] { accent-color: var(--accent); }
+
+input, select, textarea {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* Transitions */
+/* ── Transitions ────────────────────────────────────────────────────────────*/
 .transition-all { transition: all 0.2s ease; }
 
-/* Spinner */
+/* ── Spinner ────────────────────────────────────────────────────────────────*/
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
 }

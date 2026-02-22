@@ -13,10 +13,11 @@ export function Card({ children, style, accent, className }: CardProps) {
       className={className}
       style={{
         background: 'var(--bg-surface)',
-        border: `1px solid ${accent ? `${accent}33` : 'var(--border)'}`,
-        borderTop: accent ? `2px solid ${accent}` : undefined,
+        border: '1px solid var(--border)',
+        borderTop: accent ? `2px solid ${accent}` : '1px solid var(--border)',
         borderRadius: '8px',
         padding: '20px',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
         ...style,
       }}
     >
@@ -33,21 +34,21 @@ interface KpiCardProps {
   icon?: ReactNode;
 }
 
-export function KpiCard({ label, value, sub, accent = 'var(--accent-cyan)', icon }: KpiCardProps) {
+export function KpiCard({ label, value, sub, accent = 'var(--accent)', icon }: KpiCardProps) {
   return (
     <Card accent={accent}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600, textTransform: 'uppercase' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.06em', fontWeight: 600, textTransform: 'uppercase' }}>
           {label}
         </span>
-        {icon && <span style={{ color: accent, opacity: 0.7 }}>{icon}</span>}
+        {icon && <span style={{ color: accent, opacity: 0.8 }}>{icon}</span>}
       </div>
       <div
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: '28px',
+          fontSize: '26px',
           fontWeight: 700,
-          color: accent,
+          color: 'var(--text-primary)',
           margin: '8px 0 4px',
           letterSpacing: '-0.02em',
         }}
