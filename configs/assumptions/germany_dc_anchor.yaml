@@ -1,0 +1,96 @@
+# Germany Data Centre Calibration Anchor
+# Phase 1 — Borderstep 2023 calibration target
+#
+# Primary source:
+#   Hintemann, R. et al. (2023). Rechenzentren in Deutschland 2023.
+#   Borderstep Institut für Innovation und Nachhaltigkeit.
+#   URL: https://www.borderstep.de/publikationen/
+#   License: CC BY 4.0
+#
+# Cross-checks:
+#   - EU Code of Conduct for Data Centres (EU CoC) 2023 participant data
+#   - Uptime Institute Global Data Center Survey 2023 (PUE benchmarks)
+#   - BNetzA Monitoring Report 2023 (electricity consumption by sector)
+#
+# Confidence tier: 1
+#   - 3 independent sources agree within 15%
+#   - Borderstep is the most comprehensive DE-specific DC study
+#   - Coverage: >80% of German DC electricity (on-prem tail is estimated)
+
+benchmark:
+  total_twh: 18.0
+  year: 2022
+  tolerance_pct: 15.0
+  source: "Hintemann et al. (2023), Borderstep Institut"
+  notes: >
+    Borderstep reports ~18 TWh for German data centres in 2022.
+    This includes hyperscale, colocation, and on-premises segments.
+    Edge computing excluded (estimated <0.5 TWh, within tolerance).
+
+# Capacity anchors — held constant for Phase 1 (growth applied by scenario engine)
+# Values calibrated so model output = 18.59 TWh (+3.3% vs benchmark ✓)
+dc_types:
+  hyperscale:
+    installed_capacity_mw: 750.0
+    utilisation_rate: 0.65
+    pue: 1.15
+    ai_share: 0.25
+    modelled_twh: 4.91
+    confidence_tier: 1
+    sources:
+      - "borderstep_2023"
+      - "uptime_institute_2023"
+      - "hyperscaler_sustainability_reports_2023"
+    notes: >
+      Hyperscale capacity dominated by AWS Frankfurt, Google, Microsoft Azure.
+      PUE from published sustainability reports (Google DE avg ~1.10, industry ~1.15).
+      750 MW IT capacity consistent with DC Byte estimates for DE hyperscale.
+
+  colocation:
+    installed_capacity_mw: 1000.0
+    utilisation_rate: 0.55
+    pue: 1.45
+    ai_share: 0.08
+    modelled_twh: 6.98
+    confidence_tier: 1
+    sources:
+      - "borderstep_2023"
+      - "eu_coc_2023"
+      - "uptime_institute_2023"
+    notes: >
+      Colocation segment includes major operators (Equinix, NTT, Interxion).
+      PUE from EU CoC participant data for DE (median 1.45 for colo tier).
+      Utilisation 0.55 from Uptime Institute survey median.
+
+  on_premises:
+    installed_capacity_mw: 1800.0
+    utilisation_rate: 0.25
+    pue: 1.70
+    ai_share: 0.02
+    modelled_twh: 6.70
+    confidence_tier: 1
+    sources:
+      - "borderstep_2023"
+      - "bitkom_2023"
+    notes: >
+      On-premises is the most uncertain segment. Borderstep estimates ~32% of
+      total DE DC electricity from enterprise on-prem rooms. PUE 1.70 from
+      Borderstep survey of German enterprise IT rooms. Utilisation 0.25 reflects
+      chronic underutilisation of enterprise server rooms (Gartner/Borderstep).
+      Confidence tier 1 retained because Borderstep has direct survey data.
+
+# Total modelled (sum of above, deterministic, pue_improvement_rate=0):
+#   4.91 + 6.98 + 6.70 = 18.59 TWh
+#   Deviation from benchmark: (18.59 - 18.0) / 18.0 = +3.3%  ✓ within ±15%
+
+cross_checks:
+  - source: "BNetzA Monitoring 2023"
+    method: "Electricity consumption by sector — ICT services"
+    estimate_twh: 16.5
+    deviation_pct: 8.3
+    notes: "BNetzA sector data includes some non-DC ICT; lower bound estimate"
+  - source: "IEA Data Centres 2024"
+    method: "Country-level DC electricity proxy (GDP-adjusted)"
+    estimate_twh: 19.2
+    deviation_pct: 6.7
+    notes: "IEA uses top-down proxy; consistent with Borderstep bottom-up"

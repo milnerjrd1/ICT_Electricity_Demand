@@ -53,10 +53,15 @@ def test_dc_model_monte_carlo_produces_bands(germany_dc_gold, scenario_baseline,
 
 
 def test_dc_model_kwh_formula_plausible(germany_dc_gold, scenario_baseline, run_id):
-    """Spot-check: 800 MW × 0.65 utilisation × 1.15 PUE × 8760h × 1000 ≈ 5.25 TWh."""
+    """Spot-check: 750 MW × 0.65 utilisation × 1.15 PUE × 8760h × 1000 ≈ 4.91 TWh.
+
+    Fixture updated to Borderstep 2023 calibrated values (750 MW hyperscale).
+    scenario_baseline has pue_improvement_rate=0.02; year 2020 is the base year
+    so years_elapsed=0 and effective_pue = 1.15 × (1-0.02)^0 = 1.15 exactly.
+    """
     result = run_datacentres_model(germany_dc_gold, scenario_baseline, run_id=run_id)
     hyperscale_2020 = result[(result["product"] == "hyperscale") & (result["year"] == 2020)]
     assert len(hyperscale_2020) == 1
-    expected_kwh = 800.0 * 0.65 * 1.15 * 8760.0 * 1000.0
+    expected_kwh = 750.0 * 0.65 * 1.15 * 8760.0 * 1000.0
     actual_kwh = hyperscale_2020["kwh_estimate"].iloc[0]
     assert abs(actual_kwh - expected_kwh) / expected_kwh < 0.01
