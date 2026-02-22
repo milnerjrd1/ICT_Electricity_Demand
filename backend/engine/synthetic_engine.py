@@ -37,6 +37,10 @@ DATA_VINTAGE = "2026-02"
 class SyntheticEngine(ScenarioEngine):
     """Phase 0 engine — generates shaped synthetic trajectories."""
 
+    # Families that are grid overlays, not demand scenarios — excluded from the
+    # scenario builder dropdown and from run() dispatch.
+    _GRID_FAMILIES: frozenset[str] = frozenset({"grid_mix"})
+
     def __init__(self) -> None:
         self._registry = self._load_registry()
 
@@ -54,7 +58,20 @@ class SyntheticEngine(ScenarioEngine):
 
         Returns:
             RunResult with output rows, summary, and model card.
+
+        Raises:
+            ValueError: If scenario_id belongs to a grid overlay family (not a demand scenario).
         """
+        # Reject grid overlay scenarios — they are not runnable demand scenarios
+        scenario_meta = next(
+            (s for s in self._registry if s["id"] == params.scenario_id), None
+        )
+        if scenario_meta and scenario_meta.get("family") in self._GRID_FAMILIES:
+            raise ValueError(
+                f"Scenario '{params.scenario_id}' is a grid mix overlay, not a demand scenario. "
+                "Select an AI/DC or efficiency scenario instead."
+            )
+
         run_id = str(uuid.uuid4())
         logger.info("SyntheticEngine.run: scenario=%s run_id=%s", params.scenario_id, run_id)
 
@@ -149,8 +166,8 @@ class SyntheticEngine(ScenarioEngine):
         }
 
     def list_scenarios(self) -> list[dict[str, Any]]:
-        """Return scenario list from registry."""
-        return self._registry
+        """Return demand scenario list from registry (grid overlay families excluded)."""
+        return [s for s in self._registry if s.get("family") not in self._GRID_FAMILIES]
 
     def get_scenario(self, scenario_id: str) -> dict[str, Any] | None:
         """Return single scenario with assumption ranges."""
