@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { APPLICATION_AREAS, AREA_COLORS, AREA_LABELS, aggregateByAreaYear, enrichRows } from '../utils/taxonomy';
+import type { ApplicationArea } from '../utils/taxonomy';
 import {
   Area,
   CartesianGrid,
@@ -314,50 +316,48 @@ function MissionControlContent({
 }
 
 function SegmentBreakdown({ result }: { result: RunResult | undefined }) {
-  const segmentData = useMemo(() => {
+  const areaData = useMemo(() => {
     if (!result) return [];
-    const byYearSeg: Record<number, Record<string, number>> = {};
-    for (const row of result.rows) {
-      if (!byYearSeg[row.year]) byYearSeg[row.year] = {};
-      byYearSeg[row.year][row.segment] = (byYearSeg[row.year][row.segment] ?? 0) + row.kwh_p50 / 1e9;
-    }
-    return Object.entries(byYearSeg)
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([year, segs]) => ({ year: Number(year), ...segs }));
+    const enriched = enrichRows(result.rows);
+    const byAreaYear = aggregateByAreaYear(enriched);
+    const years = [...new Set(enriched.map((r) => r.year))].sort((a, b) => a - b);
+    return years.map((year) => {
+      const pt: Record<string, number> = { year };
+      for (const area of APPLICATION_AREAS) {
+        pt[area] = Math.round((byAreaYear[year]?.[area] ?? 0) * 10) / 10;
+      }
+      return pt;
+    });
   }, [result]);
 
-  const SEG_COLORS: Record<string, string> = {
-    datacentres: '#EF4444',
-    networks: '#F59E0B',
-    devices: '#10B981',
-  };
-
   return (
-    <div
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '8px',
-        padding: '20px',
-      }}
-    >
+    <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px' }}>
       <h3 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-        Demand by Segment
+        Demand by Application Area
       </h3>
-      <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-        Active scenario · P50 · TWh
+      <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+        Active scenario · P50 · TWh · Fraunhofer taxonomy
       </p>
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' }}>
+        {APPLICATION_AREAS.map((area) => (
+          <div key={area} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: AREA_COLORS[area] }} />
+            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{AREA_LABELS[area as ApplicationArea]}</span>
+          </div>
+        ))}
+      </div>
       <ResponsiveContainer width="100%" height={220}>
-        <ComposedChart data={segmentData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+        <ComposedChart data={areaData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           <XAxis dataKey="year" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
           <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={50} />
           <Tooltip
             contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', borderRadius: '6px', fontSize: '11px' }}
-            formatter={(v, name) => [`${Number(v).toLocaleString()} TWh`, String(name)]}
+            formatter={(v, name) => [`${Number(v).toLocaleString()} TWh`, AREA_LABELS[name as ApplicationArea] ?? String(name)]}
           />
-          {['datacentres', 'networks', 'devices'].map((seg) => (
-            <Area key={seg} type="monotone" dataKey={seg} stackId="1" stroke={SEG_COLORS[seg]} fill={SEG_COLORS[seg]} fillOpacity={0.6} strokeWidth={1.5} />
+          {APPLICATION_AREAS.map((area) => (
+            <Area key={area} type="monotone" dataKey={area} stackId="1"
+              stroke={AREA_COLORS[area]} fill={AREA_COLORS[area]} fillOpacity={0.55} strokeWidth={1.5} />
           ))}
         </ComposedChart>
       </ResponsiveContainer>

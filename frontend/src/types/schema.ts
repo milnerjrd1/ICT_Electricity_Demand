@@ -19,6 +19,8 @@ export interface OutputRow {
   source_ids: string[];
   emissions_kgco2e: number | null;
   cost_usd: number | null;
+  application_area?: string;
+  product_group?: string;
 }
 
 export interface ModelCard {

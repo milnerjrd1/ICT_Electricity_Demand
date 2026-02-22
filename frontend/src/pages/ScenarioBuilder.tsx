@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bar, BarChart, CartesianGrid, Cell, Line, LineChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -10,6 +10,10 @@ import { Card } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
 import { useScenarioStore } from '../store/scenarioStore';
 import type { RunResult } from '../types/schema';
+import {
+  APPLICATION_AREAS, AREA_COLORS, AREA_LABELS, aggregateByAreaYear, enrichRows,
+} from '../utils/taxonomy';
+import type { ApplicationArea } from '../utils/taxonomy';
 
 function SliderField({ label, description, value, min, max, step, format, onChange }: {
   label: string; description: string; value: number; min: number; max: number;
@@ -214,6 +218,8 @@ function ResultsPanel({ result, baselineResult, savedScenarios }: {
         </table>
       </Card>
 
+      <AreaBreakdownPanel result={result} baselineResult={baselineResult} />
+
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <Badge color="var(--accent-cyan)">v{result.model_card.model_version}</Badge>
         <Badge color="var(--accent-green)">{result.model_card.engine}</Badge>
@@ -221,6 +227,74 @@ function ResultsPanel({ result, baselineResult, savedScenarios }: {
         <Badge color="var(--text-muted)">hash:{result.model_card.assumptions_hash}</Badge>
       </div>
     </div>
+  );
+}
+
+function AreaBreakdownPanel({ result, baselineResult }: { result: RunResult; baselineResult: RunResult | null }) {
+  const endYear = result.summary.latest_year;
+
+  const areaShares = useMemo(() => {
+    const enriched = enrichRows(result.rows);
+    const byAreaYear = aggregateByAreaYear(enriched);
+    const totalTwh = APPLICATION_AREAS.reduce((s, a) => s + (byAreaYear[endYear]?.[a] ?? 0), 0);
+    return APPLICATION_AREAS.map((area) => {
+      const twh = byAreaYear[endYear]?.[area] ?? 0;
+      return { area, twh, share: totalTwh > 0 ? twh / totalTwh : 0 };
+    }).sort((a, b) => b.twh - a.twh);
+  }, [result, endYear]);
+
+  const baselineShares = useMemo(() => {
+    if (!baselineResult) return null;
+    const enriched = enrichRows(baselineResult.rows);
+    const byAreaYear = aggregateByAreaYear(enriched);
+    const totalTwh = APPLICATION_AREAS.reduce((s, a) => s + (byAreaYear[endYear]?.[a] ?? 0), 0);
+    const map: Partial<Record<ApplicationArea, number>> = {};
+    for (const area of APPLICATION_AREAS) {
+      map[area] = totalTwh > 0 ? (byAreaYear[endYear]?.[area] ?? 0) / totalTwh : 0;
+    }
+    return map;
+  }, [baselineResult, endYear]);
+
+  const barData = areaShares.map(({ area, twh, share }) => ({
+    area: AREA_LABELS[area],
+    twh: Math.round(twh * 10) / 10,
+    share_pct: Math.round(share * 1000) / 10,
+    baseline_pct: baselineShares ? Math.round((baselineShares[area] ?? 0) * 1000) / 10 : null,
+    color: AREA_COLORS[area],
+  }));
+
+  return (
+    <Card>
+      <h3 style={{ margin: '0 0 2px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+        Area Breakdown — {endYear}
+      </h3>
+      <p style={{ margin: '0 0 14px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+        Share of total ICT electricity · Fraunhofer taxonomy{baselineResult ? ' · grey = baseline' : ''}
+      </p>
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+          <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+            axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+          <YAxis type="category" dataKey="area"
+            tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-sans)' }}
+            axisLine={false} tickLine={false} width={110} />
+          <Tooltip
+            contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', borderRadius: '6px', fontSize: '11px' }}
+            formatter={(v, name) => [
+              name === 'share_pct' ? `${Number(v).toFixed(1)}% (${barData.find((d) => d.share_pct === v)?.twh ?? ''} TWh)` : `${Number(v).toFixed(1)}%`,
+              name === 'share_pct' ? 'Current' : 'Baseline',
+            ]}
+          />
+          {baselineResult && (
+            <Bar dataKey="baseline_pct" fill="var(--border-bright)" radius={[0, 2, 2, 0]} barSize={4} />
+          )}
+          <Bar dataKey="share_pct" radius={[0, 3, 3, 0]} barSize={baselineResult ? 10 : 16}>
+            {barData.map((d) => <Cell key={d.area} fill={d.color} />)}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </Card>
   );
 }
 
