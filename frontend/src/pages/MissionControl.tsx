@@ -9,7 +9,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useCreateRun, useRunStatus, useScenarios } from '../api/hooks';
+import { api } from '../api/client';
+import { useRunStatus, useScenarios } from '../api/hooks';
 import { KpiCard } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
 import { useScenarioStore } from '../store/scenarioStore';
@@ -30,7 +31,6 @@ const ALL_SCENARIOS = Object.keys(SCENARIO_COLORS);
 export function MissionControl() {
   const { data: scenarioList } = useScenarios();
   const { activeScenarioId, setActivePage } = useScenarioStore();
-  const createRun = useCreateRun();
 
   const [runIds, setRunIds] = useState<Record<string, string>>({});
   const [results, setResults] = useState<Record<string, RunResult>>({});
@@ -38,19 +38,24 @@ export function MissionControl() {
 
   useEffect(() => { setActivePage('mission-control'); }, [setActivePage]);
 
-  // Bootstrap: fire all scenario runs once on mount
+  // Bootstrap: fire all 7 runs concurrently via Promise.all.
+  // Cannot use a shared useMutation instance — calling .mutate() multiple times
+  // on one instance cancels the previous call, so only the last onSuccess fires.
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
-    ALL_SCENARIOS.forEach((sid) => {
-      createRun.mutate(
-        { scenario_id: sid, seed: 42 },
-        {
-          onSuccess: (data) => {
-            setRunIds((prev) => ({ ...prev, [sid]: data.run_id }));
-          },
-        },
-      );
+
+    Promise.all(
+      ALL_SCENARIOS.map((sid) =>
+        api.post<{ run_id: string }>('/runs', { scenario_id: sid, seed: 42 })
+          .then((data) => ({ sid, run_id: data.run_id }))
+      )
+    ).then((pairs) => {
+      const ids: Record<string, string> = {};
+      for (const { sid, run_id } of pairs) ids[sid] = run_id;
+      setRunIds(ids);
+    }).catch((err) => {
+      console.error('Failed to bootstrap scenario runs:', err);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
