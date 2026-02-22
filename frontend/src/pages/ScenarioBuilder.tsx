@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Bar, BarChart, CartesianGrid, Cell, Line, LineChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -50,12 +50,16 @@ function SectionLabel({ children }: { children: string }) {
 function RunWatcher({ runId, onDone }: { runId: string; onDone: (r: RunResult) => void }) {
   const { data } = useRunStatus(runId);
   const called = useRef(false);
+  // Stable ref so the effect only re-fires when data changes, not on every
+  // parent render that recreates the inline onDone arrow function.
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; });
   useEffect(() => {
     if (data?.status === 'done' && data.result && !called.current) {
       called.current = true;
-      onDone(data.result);
+      onDoneRef.current(data.result);
     }
-  }, [data, onDone]);
+  }, [data]);
   return null;
 }
 
@@ -226,6 +230,7 @@ export function ScenarioBuilder() {
     setCurrentRunId, savedScenarios, saveScenario, removeScenario } = useScenarioStore();
   const createRun = useCreateRun();
   const [currentRunId, setLocalRunId] = useState<string | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
   const [saveLabel, setSaveLabel] = useState('');
   const [showSaveInput, setShowSaveInput] = useState(false);
   const [latestResult, setLatestResult] = useState<RunResult | null>(null);
@@ -235,16 +240,21 @@ export function ScenarioBuilder() {
   useEffect(() => {
     if (baselineLoaded.current) return;
     baselineLoaded.current = true;
-    createRun.mutate({ scenario_id: 'ai_base', seed: 42 }, {
-      onSuccess: (d) => setLocalRunId(d.run_id),
-    });
+    createRun.mutateAsync({ scenario_id: 'ai_base', seed: 42 })
+      .then((d) => setLocalRunId(d.run_id))
+      .catch(() => { /* baseline failure is non-fatal */ });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleRun = () => {
-    createRun.mutate(activeParams, {
-      onSuccess: (d) => { setLocalRunId(d.run_id); setCurrentRunId(d.run_id); },
-    });
-  };
+  const handleRun = useCallback(async () => {
+    setIsRunning(true);
+    try {
+      const d = await createRun.mutateAsync(activeParams);
+      setLocalRunId(d.run_id);
+      setCurrentRunId(d.run_id);
+    } catch {
+      setIsRunning(false);
+    }
+  }, [activeParams, createRun, setCurrentRunId]);
 
   const handleSave = () => {
     if (!latestResult || !saveLabel.trim()) return;
@@ -259,6 +269,7 @@ export function ScenarioBuilder() {
         <RunWatcher runId={currentRunId} onDone={(r) => {
           setLatestResult(r);
           if (!baselineResult) setBaselineResult(r);
+          setIsRunning(false);
         }} />
       )}
       <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '20px', alignItems: 'start' }}>
@@ -300,8 +311,8 @@ export function ScenarioBuilder() {
             <SliderField label="Power Efficiency" description="factor" value={activeParams.power_efficiency_factor ?? 1.0}
               min={0.5} max={1.5} step={0.05} format={(v) => `${v.toFixed(2)}×`} onChange={(v) => updateParam('power_efficiency_factor', v)} />
             <div style={{ marginTop: '20px', display: 'flex', gap: '8px' }}>
-              <Button onClick={handleRun} loading={createRun.isPending} disabled={createRun.isPending} style={{ flex: 1, justifyContent: 'center' }}>
-                {createRun.isPending ? 'Running...' : '▶ RUN SCENARIO'}
+              <Button onClick={handleRun} loading={isRunning} disabled={isRunning} style={{ flex: 1, justifyContent: 'center' }}>
+                {isRunning ? 'Running...' : '▶ RUN SCENARIO'}
               </Button>
             </div>
             {latestResult && (
