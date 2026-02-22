@@ -1,4 +1,4 @@
-import { BarChart2, Database, Download, Home, Layers, Shield } from 'lucide-react';
+import { BarChart2, BookOpen, Database, Download, Home, Layers, Shield } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const NAV_ITEMS = [
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/explorer', icon: BarChart2, label: 'Demand Explorer' },
   { to: '/quality', icon: Shield, label: 'Data Quality' },
   { to: '/export', icon: Download, label: 'Export' },
+  { to: '/guide', icon: BookOpen, label: 'Scenario Guide' },
 ];
 
 export function Sidebar() {

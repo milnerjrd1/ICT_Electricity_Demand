@@ -6,6 +6,7 @@ import { DemandExplorer } from './pages/DemandExplorer';
 import { Export } from './pages/Export';
 import { MissionControl } from './pages/MissionControl';
 import { ScenarioBuilder } from './pages/ScenarioBuilder';
+import { ScenarioGuide } from './pages/ScenarioGuide';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/explorer" element={<DemandExplorer />} />
             <Route path="/quality" element={<DataQuality />} />
             <Route path="/export" element={<Export />} />
+            <Route path="/guide" element={<ScenarioGuide />} />
           </Route>
         </Routes>
       </BrowserRouter>
