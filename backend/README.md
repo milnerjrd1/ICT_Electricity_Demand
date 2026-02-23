@@ -28,20 +28,21 @@ backend/
 │       └── config.py     GET /config/assumptions
 ├── engine/
 │   ├── base.py           ScenarioEngine ABC (stable interface)
-│   ├── synthetic_engine.py  Phase 0: shaped synthetic trajectories
-│   └── pipeline_engine.py   Phase 1+ stub (raises NotImplementedError)
+│   └── synthetic_engine.py  Phase 0: shaped synthetic trajectories
 ├── models.py             Pydantic request/response models (API contract source of truth)
 └── synthetic.py          Trajectory generator: 7 scenario curve shapes + emissions + cost
 ```
 
-**Engine swap (Phase 1):** Change one line in `backend/api/main.py`:
+**Engine swap (Phase 1):** Implement a new `ScenarioEngine` subclass and change one line in `backend/api/main.py`:
 ```python
 # Phase 0 (current)
 _engine: ScenarioEngine = SyntheticEngine()
 
 # Phase 1 (when real data loaders are ready)
-_engine: ScenarioEngine = PipelineEngine()
+_engine: ScenarioEngine = YourNewEngine()
 ```
+
+> The original `PipelineEngine` stub was removed (recoverable from git history).
 
 ---
 

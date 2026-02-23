@@ -1,6 +1,6 @@
 # Frontend — ICT Electricity Demand
 
-React 18 + Vite + TypeScript enterprise UI for the ICT Electricity Demand scenario modelling tool.
+React 19 + Vite 7 + TypeScript enterprise UI for the ICT Electricity Demand scenario modelling tool.
 
 ## Quick Start
 
@@ -34,6 +34,8 @@ npm run dev
 | Recharts | 3 | Line/area/bar charts |
 | react-plotly.js | 2 | Choropleth world map (lazy-loaded on Explorer page) |
 | Lucide React | 0.575 | Icons |
+| Open Sans | — | Body font (loaded via Google Fonts) |
+| JetBrains Mono | — | Monospace font for data values, badges, code |
 
 ## Structure
 
@@ -62,7 +64,9 @@ src/
 │   ├── ScenarioBuilder.tsx  Assumption sliders + RUN button + results panel
 │   ├── DemandExplorer.tsx   Choropleth map + by-segment/geo/product tabs
 │   ├── DataQuality.tsx      Confidence tier cards + heatmap + geo ranking
-│   └── Export.tsx           CSV download + paginated data preview
+│   ├── Export.tsx           CSV download + paginated data preview
+│   ├── ScenarioGuide.tsx    Interactive scenario family browser
+│   └── Methodology.tsx      SVG process flow with pan/zoom + flow highlighting
 ├── store/
 │   └── scenarioStore.ts  Zustand store (active params, saved scenarios)
 └── types/
@@ -71,11 +75,7 @@ src/
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|---|---|---|
-| `VITE_API_BASE` | `/api/v1` | API base path (override for production deployments) |
-
-The Vite dev server proxies all `/api` requests to `http://localhost:8000` (configured in `vite.config.ts`).
+No environment variables are required for development. The Vite dev server proxies all `/api` requests to `http://localhost:8000` (configured in `vite.config.ts`). The API base path `/api/v1` is hardcoded in `src/api/client.ts`.
 
 ## API Wiring
 
@@ -85,16 +85,15 @@ The Vite dev server proxies all `/api` requests to `http://localhost:8000` (conf
 
 ## Design System
 
-All theme tokens are CSS custom properties defined in `src/index.css`:
+Light-theme design with CSS custom properties defined in `src/index.css`:
 
 | Token | Value | Usage |
 |---|---|---|
-| `--bg-base` | `#0A0E1A` | Page background |
-| `--bg-surface` | `#111827` | Cards, sidebar |
-| `--bg-elevated` | `#1F2937` | Inputs, table rows |
-| `--accent-cyan` | `#00D4FF` | Primary accent, active states |
-| `--accent-green` | `#10B981` | Positive / Tier 1 |
-| `--accent-amber` | `#F59E0B` | Warning / Tier 2 |
-| `--accent-red` | `#EF4444` | Alert / Tier 3 / DC segment |
+| `--bg-base` | `#F6F7F9` | Page background |
+| `--bg-surface` | `#FFFFFF` | Cards, sidebar |
+| `--bg-elevated` | `#FBFBFC` | Inputs, table rows |
+| `--accent` | `#86BC24` | Primary accent (brand green) |
+| `--accent-amber` | `#ED8B00` | Warning / Tier 2 |
+| `--accent-red` | `#DA291C` | Alert / Tier 3 |
 | `--font-mono` | JetBrains Mono | Data values, badges |
-| `--font-sans` | Inter | Body text |
+| `--font-sans` | Open Sans | Body text |

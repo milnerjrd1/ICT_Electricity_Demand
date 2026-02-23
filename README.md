@@ -2,6 +2,7 @@
 
 A modular Python model and enterprise React decision-support tool that estimates and forecasts
 ICT-driven electricity demand globally by geography × segment × product × year.
+Light-theme UI built with React 19, Vite 7, Tailwind CSS 4, and Open Sans / JetBrains Mono fonts.
 
 ## Features
 
@@ -38,13 +39,6 @@ npm run dev
 # App → http://localhost:5173
 ```
 
-### Legacy Streamlit app (fallback only)
-
-```bash
-uv run streamlit run app/Home.py
-# → http://localhost:8501
-```
-
 ### Tests & pipeline
 
 ```bash
@@ -60,12 +54,13 @@ uv run python scripts/run_pipeline.py  # full nightly pipeline
 ict-electricity-demand/
 ├── backend/                  FastAPI application (see backend/README.md)
 │   ├── api/main.py           ← API entrypoint
-│   ├── engine/               ScenarioEngine ABC + synthetic/pipeline implementations
+│   ├── engine/               ScenarioEngine ABC + SyntheticEngine
 │   ├── models.py             Pydantic API contract (source of truth for types)
 │   └── synthetic.py          Shaped trajectory generator
-├── frontend/                 React 18 + Vite + TypeScript (see frontend/README.md)
+├── frontend/                 React 19 + Vite 7 + TypeScript (see frontend/README.md)
 │   └── src/
-│       ├── pages/            MissionControl · ScenarioBuilder · DemandExplorer · DataQuality · Export
+│       ├── pages/            MissionControl · ScenarioBuilder · DemandExplorer
+│       │                     DataQuality · Export · ScenarioGuide · Methodology
 │       ├── api/              TanStack Query hooks + fetch client
 │       └── store/            Zustand UI state
 ├── src/                      Python model logic (black box)
@@ -73,7 +68,6 @@ ict-electricity-demand/
 │   ├── models/               Devices · Networks · Data Centres · Schema
 │   ├── scenarios/            Registry + engine
 │   └── validation/           Plausibility checks + triangulation
-├── app/                      Legacy Streamlit UI (fallback)
 ├── configs/
 │   ├── assumptions/          Versioned YAML assumption sets
 │   └── scenarios/            Named scenario configs + registry.yaml
@@ -111,3 +105,6 @@ ict-electricity-demand/
 | 3 | Planned | Global coverage + AI compute layer |
 | 4 | Planned | Monte Carlo uncertainty (1000 iterations) |
 | 5 | Planned | Nightly pipeline + model card artefacts |
+
+> **Note:** The legacy Streamlit prototype (`app/`) was removed in the `chore/debloat-and-docs`
+> branch. It is recoverable from git history if needed.
