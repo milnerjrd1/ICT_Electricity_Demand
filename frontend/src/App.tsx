@@ -8,6 +8,7 @@ import { MissionControl } from './pages/MissionControl';
 import { ScenarioBuilder } from './pages/ScenarioBuilder';
 import { ScenarioGuide } from './pages/ScenarioGuide';
 import { Methodology } from './pages/Methodology';
+import { BenchmarkComparison } from './pages/BenchmarkComparison';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/export" element={<Export />} />
             <Route path="/guide" element={<ScenarioGuide />} />
             <Route path="/methodology" element={<Methodology />} />
+            <Route path="/benchmarks" element={<BenchmarkComparison />} />
           </Route>
         </Routes>
       </BrowserRouter>

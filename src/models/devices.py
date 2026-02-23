@@ -50,14 +50,14 @@ def run_devices_model(
         group["avg_lifespan_years"] = group["avg_lifespan_years"] * lifespan_multiplier
 
         installed_base = 0.0
-        base_history: list[float] = []
+        shipments_history: list[float] = []
 
         for _, row in group.iterrows():
             lifespan = int(round(row["avg_lifespan_years"]))
-            retirements = base_history[-lifespan] if len(base_history) >= lifespan else 0.0
+            retirements = shipments_history[-lifespan] if len(shipments_history) >= lifespan else 0.0
             installed_base = installed_base + row["shipments"] - retirements
             installed_base = max(0.0, installed_base)
-            base_history.append(installed_base)
+            shipments_history.append(float(row["shipments"]))
 
             annual_kwh = (
                 installed_base

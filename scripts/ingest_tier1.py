@@ -5,7 +5,8 @@ Writes three gold tables to DuckDB for all Tier 1 DC hotspot geos:
   - grid_ef      : Grid emission factors 2018-2024
   - electricity_prices : Industrial electricity prices 2018-2024
 
-Covers: DE (Borderstep anchor) + US, GB, IE, NL, SG, JP, AE (Tier 1 anchors).
+Covers: DE (Stobbe 2025 anchor) + US, GB, IE, NL, SG, JP, AE (Tier 1 anchors).
+Also writes networks and devices gold tables for DE, anchored to Stobbe et al. 2025.
 
 Usage:
     uv run python scripts/ingest_tier1.py [--geos US GB ...] [--replace] [--dry-run]
@@ -196,6 +197,65 @@ def build_prices_df(geos: list[str], run_id: str) -> pd.DataFrame:
     return combined
 
 
+# Full burn-in range required by the stock-flow model in src/models/devices.py.
+# The devices model retires shipments from avg_lifespan_years ago; without pre-history
+# the installed base starts at zero and takes lifespan years to reach steady state.
+# Networks uses the same range for consistency.
+_BURNIN_YEARS: list[int] = list(range(2002, 2025))
+
+
+def build_networks_df(geos: list[str], run_id: str, years: list[int]) -> pd.DataFrame:  # noqa: ARG001
+    """Build combined networks DataFrame for DE (Stobbe 2025 anchor).
+
+    Always uses the full burn-in range 2002-2024 regardless of the years argument,
+    so that the stock-flow model has sufficient pre-history.
+
+    Args:
+        geos: List of geo ISO codes. Only DE is supported currently.
+        run_id: UUID string for the current pipeline run.
+        years: Ignored; kept for API compatibility with build_dc_df.
+
+    Returns:
+        Combined DataFrame for all supported geos, or empty DataFrame.
+    """
+    dfs: list[pd.DataFrame] = []
+
+    if "DE" in geos:
+        from src.data.loader_eurostat import load_germany_networks_anchor
+        de_df = load_germany_networks_anchor(run_id=run_id, years=_BURNIN_YEARS)
+        dfs.append(de_df)
+
+    combined = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+    logger.info("Networks combined: %d rows (years 2002-2024)", len(combined))
+    return combined
+
+
+def build_devices_df(geos: list[str], run_id: str, years: list[int]) -> pd.DataFrame:  # noqa: ARG001
+    """Build combined devices DataFrame for DE (Stobbe 2025 anchor).
+
+    Always uses the full burn-in range 2002-2024 regardless of the years argument,
+    so that the stock-flow model has sufficient pre-history.
+
+    Args:
+        geos: List of geo ISO codes. Only DE is supported currently.
+        run_id: UUID string for the current pipeline run.
+        years: Ignored; kept for API compatibility with build_dc_df.
+
+    Returns:
+        Combined DataFrame for all supported geos, or empty DataFrame.
+    """
+    dfs: list[pd.DataFrame] = []
+
+    if "DE" in geos:
+        from src.data.loader_eurostat import load_germany_devices_anchor
+        de_df = load_germany_devices_anchor(run_id=run_id, years=_BURNIN_YEARS)
+        dfs.append(de_df)
+
+    combined = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+    logger.info("Devices combined: %d rows (years 2002-2024)", len(combined))
+    return combined
+
+
 def main() -> int:
     """Run the Tier 1 ingest. Returns exit code (0 = success, 1 = error)."""
     args = parse_args()
@@ -216,16 +276,22 @@ def main() -> int:
     dc_df = build_dc_df(args.geos, run_id, args.years)
     grid_ef_df = build_grid_ef_df(args.geos, run_id)
     prices_df = build_prices_df(args.geos, run_id)
+    networks_df = build_networks_df(args.geos, run_id, args.years)
+    devices_df = build_devices_df(args.geos, run_id, args.years)
 
     if args.dry_run:
         logger.info("DRY RUN — no writes to DuckDB")
         logger.info("Would write datacentres: %d rows", len(dc_df))
         logger.info("Would write grid_ef: %d rows", len(grid_ef_df))
         logger.info("Would write electricity_prices: %d rows", len(prices_df))
+        logger.info("Would write networks: %d rows", len(networks_df))
+        logger.info("Would write devices: %d rows", len(devices_df))
         print("\n--- datacentres sample (first 5 rows) ---")
         print(dc_df.head(5).to_string())
         print(f"\n--- grid_ef: {len(grid_ef_df)} rows across {dc_df['geo'].nunique() if not dc_df.empty else 0} geos ---")
         print(f"--- electricity_prices: {len(prices_df)} rows ---")
+        print(f"--- networks: {len(networks_df)} rows ---")
+        print(f"--- devices: {len(devices_df)} rows ---")
         return 0
 
     from src.data.gold_writer import write_gold_table
@@ -257,9 +323,29 @@ def main() -> int:
         if_exists=if_exists,
     )
 
+    if not networks_df.empty:
+        write_gold_table(
+            df=networks_df,
+            table_name="networks",
+            source_id="stobbe_fraunhofer_izm_2025",
+            version="2025",
+            run_id=run_id,
+            if_exists=if_exists,
+        )
+
+    if not devices_df.empty:
+        write_gold_table(
+            df=devices_df,
+            table_name="devices",
+            source_id="stobbe_fraunhofer_izm_2025",
+            version="2025",
+            run_id=run_id,
+            if_exists=if_exists,
+        )
+
     logger.info(
-        "Tier 1 ingest complete — datacentres: %d rows, grid_ef: %d rows, electricity_prices: %d rows",
-        len(dc_df), len(grid_ef_df), len(prices_df),
+        "Tier 1 ingest complete — datacentres: %d, grid_ef: %d, prices: %d, networks: %d, devices: %d rows",
+        len(dc_df), len(grid_ef_df), len(prices_df), len(networks_df), len(devices_df),
     )
     return 0
 

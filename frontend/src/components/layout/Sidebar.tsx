@@ -1,4 +1,4 @@
-import { BarChart2, BookOpen, Database, Download, GitBranch, Home, Layers, Shield } from 'lucide-react';
+import { BarChart2, BookOpen, Database, Download, FlaskConical, GitBranch, Home, Layers, Shield } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const NAV_ITEMS = [
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/export', icon: Download, label: 'Export' },
   { to: '/guide', icon: BookOpen, label: 'Scenario Guide' },
   { to: '/methodology', icon: GitBranch, label: 'Methodology' },
+  { to: '/benchmarks', icon: FlaskConical, label: 'Benchmarks' },
 ];
 
 export function Sidebar() {
