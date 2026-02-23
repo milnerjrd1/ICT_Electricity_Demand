@@ -26,7 +26,29 @@ def apply_cost_overlay(
         Input DataFrame with additional columns:
             cost_usd, cost_p10_usd, cost_p50_usd, cost_p90_usd.
     """
-    merged = electricity_df.merge(price_df[["geo", "year", "price_usd_per_kwh"]], on=["geo", "year"], how="left")
+    # Forward-fill: carry each geo's latest known price into future years
+    prices = price_df[["geo", "year", "price_usd_per_kwh"]].copy()
+    all_years = electricity_df["year"].unique()
+    latest_price = (
+        prices.sort_values("year")
+        .groupby("geo", as_index=False)
+        .last()
+        .rename(columns={"year": "_price_year"})
+    )
+    future_rows: list[pd.DataFrame] = []
+    for _, row in latest_price.iterrows():
+        future_yrs = [y for y in all_years if y > row["_price_year"]]
+        if future_yrs:
+            future_rows.append(pd.DataFrame({
+                "geo": row["geo"],
+                "year": future_yrs,
+                "price_usd_per_kwh": row["price_usd_per_kwh"],
+            }))
+    if future_rows:
+        prices = pd.concat([prices, pd.concat(future_rows, ignore_index=True)], ignore_index=True)
+        logger.info("Forward-filled electricity prices for %d geo×year combinations", sum(len(f) for f in future_rows))
+
+    merged = electricity_df.merge(prices, on=["geo", "year"], how="left")
 
     missing_price = merged["price_usd_per_kwh"].isnull().sum()
     if missing_price > 0:
