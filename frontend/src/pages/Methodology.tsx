@@ -49,10 +49,8 @@ const STATUS_STYLE: Record<NodeStatus, { label: string; bg: string; color: strin
   phase0:      { label: 'Phase 0',     bg: 'rgba(237,139,0,0.12)',    color: '#B06C00' },
 };
 
-const TIER_ORDER: TierKey[] = ['sources', 'loaders', 'models', 'overlays', 'outputs'];
-
 /* ═══════════════════════════════════════════════════════════════════════════
-   PLACEHOLDER — nodes, edges, components appended below
+   NODE & EDGE DATA
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const NODES: FlowNodeDef[] = [
@@ -286,6 +284,153 @@ const EDGES: FlowEdgeDef[] = [
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   LAYOUT — x,y positions for every node on the SVG canvas
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const NODE_W = 180;
+const NODE_H = 90;
+const CANVAS_W = 1600;
+const CANVAS_H = 1300;
+
+const LAYOUT: Record<string, { x: number; y: number }> = {
+  // Tier 1: Sources — y=30
+  src_eurostat:    { x: 20,   y: 30 },
+  src_borderstep:  { x: 215,  y: 30 },
+  src_iea:         { x: 410,  y: 30 },
+  src_itu:         { x: 605,  y: 30 },
+  src_comtrade:    { x: 800,  y: 30 },
+  src_dcbyte:      { x: 995,  y: 30 },
+  src_grid_yaml:   { x: 20,   y: 140 },
+  src_ref_params:  { x: 215,  y: 140 },
+  src_scenarios:   { x: 410,  y: 140 },
+  src_geo_tiers:   { x: 605,  y: 140 },
+
+  // Tier 2: Loaders — y=310
+  ldr_eurostat:    { x: 80,   y: 310 },
+  ldr_iea:         { x: 280,  y: 310 },
+  ldr_itu:         { x: 480,  y: 310 },
+  ldr_trade:       { x: 680,  y: 310 },
+  ldr_dcbyte:      { x: 880,  y: 310 },
+  ldr_gold_writer: { x: 480,  y: 430 },
+
+  // Tier 3: Models — y=590
+  mdl_inventory:   { x: 20,   y: 590 },
+  mdl_load_profile:{ x: 215,  y: 590 },
+  mdl_devices:     { x: 120,  y: 720 },
+  mdl_networks:    { x: 440,  y: 720 },
+  mdl_datacentres: { x: 760,  y: 720 },
+  mdl_taxonomy:    { x: 440,  y: 590 },
+  mdl_uncertainty: { x: 635,  y: 590 },
+  mdl_schema:      { x: 830,  y: 590 },
+
+  // Tier 4: Overlays — y=880
+  ovl_carbon:      { x: 240,  y: 880 },
+  ovl_cost:        { x: 540,  y: 880 },
+  ovl_reporting:   { x: 390,  y: 990 },
+
+  // Tier 5: Outputs — y=1130
+  out_schema:      { x: 300,  y: 1130 },
+  out_duckdb:      { x: 540,  y: 1130 },
+  out_api:         { x: 780,  y: 1130 },
+
+  // Phase 0 — right column
+  p0_engine:       { x: 1300, y: 310 },
+  p0_synthetic:    { x: 1300, y: 590 },
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GRAPH TRAVERSAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function getUpstream(nodeId: string, edges: FlowEdgeDef[]): Set<string> {
+  const visited = new Set<string>();
+  const queue = [nodeId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const e of edges) {
+      if (e.to === current && !visited.has(e.from)) {
+        visited.add(e.from);
+        queue.push(e.from);
+      }
+    }
+  }
+  return visited;
+}
+
+function getDownstream(nodeId: string, edges: FlowEdgeDef[]): Set<string> {
+  const visited = new Set<string>();
+  const queue = [nodeId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const e of edges) {
+      if (e.from === current && !visited.has(e.to)) {
+        visited.add(e.to);
+        queue.push(e.to);
+      }
+    }
+  }
+  return visited;
+}
+
+function getFlowPath(nodeId: string, edges: FlowEdgeDef[]): Set<string> {
+  const up = getUpstream(nodeId, edges);
+  const down = getDownstream(nodeId, edges);
+  return new Set([...up, nodeId, ...down]);
+}
+
+function getFlowEdges(activeNodes: Set<string>, edges: FlowEdgeDef[]): Set<number> {
+  const result = new Set<number>();
+  edges.forEach((e, i) => {
+    if (activeNodes.has(e.from) && activeNodes.has(e.to)) result.add(i);
+  });
+  return result;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FLOW PRESETS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+interface FlowPreset {
+  label: string;
+  description: string;
+  seedNodes: string[];
+}
+
+const FLOW_PRESETS: FlowPreset[] = [
+  { label: 'All', description: 'Show all connections', seedNodes: [] },
+  { label: 'Devices', description: 'Comtrade → stock-flow → devices → outputs',
+    seedNodes: ['src_comtrade', 'ldr_trade', 'ldr_gold_writer', 'mdl_inventory', 'mdl_load_profile',
+      'mdl_devices', 'mdl_taxonomy', 'mdl_schema', 'src_ref_params',
+      'ovl_carbon', 'ovl_cost', 'ovl_reporting', 'out_schema', 'out_duckdb', 'out_api'] },
+  { label: 'Networks', description: 'ITU → loaders → networks model → outputs',
+    seedNodes: ['src_itu', 'ldr_itu', 'ldr_gold_writer', 'mdl_networks', 'mdl_taxonomy', 'mdl_schema',
+      'ovl_carbon', 'ovl_cost', 'ovl_reporting', 'out_schema', 'out_duckdb', 'out_api'] },
+  { label: 'Data Centres', description: 'Eurostat + DC Byte → DC model → outputs',
+    seedNodes: ['src_eurostat', 'src_borderstep', 'src_dcbyte', 'ldr_eurostat', 'ldr_dcbyte',
+      'ldr_gold_writer', 'mdl_datacentres', 'mdl_taxonomy', 'mdl_schema',
+      'ovl_carbon', 'ovl_cost', 'ovl_reporting', 'out_schema', 'out_duckdb', 'out_api'] },
+  { label: 'Phase 0', description: 'Synthetic bypass — scenarios → shaped curves → API',
+    seedNodes: ['src_scenarios', 'src_grid_yaml', 'p0_engine', 'p0_synthetic', 'out_api'] },
+];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BEZIER PATH HELPER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function bezierPath(fromId: string, toId: string): string {
+  const from = LAYOUT[fromId];
+  const to = LAYOUT[toId];
+  if (!from || !to) return '';
+  const x1 = from.x + NODE_W / 2;
+  const y1 = from.y + NODE_H;
+  const x2 = to.x + NODE_W / 2;
+  const y2 = to.y;
+  const dy = Math.abs(y2 - y1);
+  const cp = Math.max(dy * 0.45, 40);
+  return `M ${x1} ${y1} C ${x1} ${y1 + cp}, ${x2} ${y2 - cp}, ${x2} ${y2}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    SUB-COMPONENTS
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -313,54 +458,64 @@ function FormulaBox({ formula }: { formula: string }) {
   return (
     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-secondary)',
       background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: '4px',
-      padding: '4px 8px', marginTop: '6px', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+      padding: '4px 8px', marginTop: '4px', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
       {formula}
     </div>
   );
 }
 
-function FlowNodeCard({ node, selected, onClick }: { node: FlowNodeDef; selected: boolean; onClick: () => void }) {
+/* ── Canvas node card (rendered inside foreignObject) ──────────────────── */
+
+function CanvasNode({ node, isActive, isSelected, isDimmed, onClick }: {
+  node: FlowNodeDef; isActive: boolean; isSelected: boolean; isDimmed: boolean; onClick: () => void;
+}) {
   const tier = TIER_META[node.tier];
   const isPhase0 = node.tier === 'phase0';
   return (
     <button
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
       style={{
+        width: NODE_W,
+        height: NODE_H,
         background: 'var(--bg-surface)',
-        border: `1.5px ${isPhase0 ? 'dashed' : 'solid'} ${selected ? tier.color : 'var(--border)'}`,
+        border: `1.5px ${isPhase0 ? 'dashed' : 'solid'} ${isSelected ? tier.color : isActive ? tier.color : 'var(--border)'}`,
         borderRadius: '8px',
-        padding: '12px 14px',
-        width: '200px',
-        minHeight: '80px',
+        padding: '8px 10px',
         cursor: 'pointer',
         textAlign: 'left',
         fontFamily: 'var(--font-sans)',
-        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-        boxShadow: selected ? `0 0 0 3px ${tier.color}20, 0 2px 8px rgba(0,0,0,0.08)` : '0 1px 3px rgba(0,0,0,0.05)',
+        transition: 'opacity 0.25s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+        opacity: isDimmed ? 0.15 : 1,
+        boxShadow: isSelected
+          ? `0 0 0 3px ${tier.color}30, 0 2px 12px rgba(0,0,0,0.12)`
+          : isActive ? `0 0 0 2px ${tier.color}18, 0 1px 4px rgba(0,0,0,0.06)` : '0 1px 3px rgba(0,0,0,0.05)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '6px',
-        flexShrink: 0,
+        gap: '3px',
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
         <StatusBadge status={node.status} />
         {node.confidenceTier && <TierBadge tier={node.confidenceTier} />}
       </div>
-      <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+      <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {node.label}
       </div>
-      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+      <div style={{ fontSize: '10px', color: 'var(--text-secondary)', lineHeight: 1.3,
+        overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
         {node.shortDesc}
       </div>
-      {node.formula && <FormulaBox formula={node.formula} />}
       {/* Left accent bar */}
-      <div style={{ position: 'absolute', left: 0, top: '8px', bottom: '8px', width: '3px',
-        borderRadius: '0 2px 2px 0', background: tier.color, opacity: selected ? 1 : 0.4 }} />
+      <div style={{ position: 'absolute', left: 0, top: '6px', bottom: '6px', width: '3px',
+        borderRadius: '0 2px 2px 0', background: tier.color, opacity: isSelected || isActive ? 1 : 0.3 }} />
     </button>
   );
 }
+
+/* ── Detail panel (slide-out right) ────────────────────────────────────── */
 
 function DetailPanel({ node, onClose }: { node: FlowNodeDef; onClose: () => void }) {
   const [showCode, setShowCode] = useState(false);
@@ -372,7 +527,6 @@ function DetailPanel({ node, onClose }: { node: FlowNodeDef; onClose: () => void
       boxShadow: '-4px 0 20px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column',
       overflow: 'hidden',
     }}>
-      {/* Header */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -386,7 +540,6 @@ function DetailPanel({ node, onClose }: { node: FlowNodeDef; onClose: () => void
         <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{node.label}</h3>
       </div>
 
-      {/* Toggle */}
       <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '0' }}>
         {(['plain', 'code'] as const).map((mode) => (
           <button key={mode} onClick={() => setShowCode(mode === 'code')}
@@ -403,7 +556,6 @@ function DetailPanel({ node, onClose }: { node: FlowNodeDef; onClose: () => void
         ))}
       </div>
 
-      {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
         {!showCode ? (
           <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-primary)', lineHeight: 1.7 }}>
@@ -427,38 +579,62 @@ function DetailPanel({ node, onClose }: { node: FlowNodeDef; onClose: () => void
   );
 }
 
-function TierRow({ tierKey, nodes, selectedId, onSelect }: {
-  tierKey: TierKey; nodes: FlowNodeDef[]; selectedId: string | null; onSelect: (id: string) => void;
+/* ── Tier band backgrounds for the SVG canvas ──────────────────────────── */
+
+const TIER_BANDS: { tier: TierKey; y: number; h: number }[] = [
+  { tier: 'sources',  y: 0,    h: 260 },
+  { tier: 'loaders',  y: 270,  h: 280 },
+  { tier: 'models',   y: 560,  h: 280 },
+  { tier: 'overlays', y: 850,  h: 240 },
+  { tier: 'outputs',  y: 1100, h: 140 },
+];
+
+/* ── Flow toolbar (presets + zoom controls) ────────────────────────────── */
+
+function FlowToolbar({ activePreset, onPreset, zoom, onZoomIn, onZoomOut, onFit }: {
+  activePreset: number; onPreset: (i: number) => void;
+  zoom: number; onZoomIn: () => void; onZoomOut: () => void; onFit: () => void;
 }) {
-  const meta = TIER_META[tierKey];
   return (
-    <div style={{ background: meta.bg, borderRadius: '10px', padding: '16px 20px', border: `1px solid ${meta.color}20` }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: meta.color, flexShrink: 0 }} />
-        <span style={{ fontSize: '11px', fontWeight: 700, color: meta.color, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-          {meta.label}
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+      {/* Flow presets */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', alignSelf: 'center', marginRight: '4px' }}>
+          Trace flow:
         </span>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>— {nodes.length} nodes</span>
+        {FLOW_PRESETS.map((p, i) => (
+          <button key={p.label} onClick={() => onPreset(i)} title={p.description}
+            style={{
+              padding: '5px 12px', fontSize: '11px', fontWeight: 600, borderRadius: '5px', cursor: 'pointer',
+              border: activePreset === i ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+              background: activePreset === i ? 'var(--accent-soft)' : 'var(--bg-surface)',
+              color: activePreset === i ? 'var(--accent-active)' : 'var(--text-secondary)',
+              transition: 'all 0.15s ease',
+            }}>
+            {p.label}
+          </button>
+        ))}
       </div>
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        {nodes.map((n) => (
-          <FlowNodeCard key={n.id} node={n} selected={selectedId === n.id} onClick={() => onSelect(n.id)} />
+      {/* Zoom controls */}
+      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginRight: '6px' }}>
+          {Math.round(zoom * 100)}%
+        </span>
+        {[{ label: '−', fn: onZoomOut }, { label: '+', fn: onZoomIn }, { label: 'Fit', fn: onFit }].map((b) => (
+          <button key={b.label} onClick={b.fn}
+            style={{ width: b.label === 'Fit' ? 'auto' : '28px', height: '28px', padding: '0 8px',
+              fontSize: '12px', fontWeight: 600, borderRadius: '4px', cursor: 'pointer',
+              border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-secondary)' }}>
+            {b.label}
+          </button>
         ))}
       </div>
     </div>
   );
 }
 
-function DownArrow() {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center', padding: '4px 0' }}>
-      <svg width="20" height="28" viewBox="0 0 20 28">
-        <line x1="10" y1="0" x2="10" y2="22" stroke="var(--border-bright)" strokeWidth="1.5" />
-        <polygon points="5,20 10,28 15,20" fill="var(--border-bright)" />
-      </svg>
-    </div>
-  );
-}
+/* ── Legend ─────────────────────────────────────────────────────────────── */
 
 function Legend() {
   const items: { label: string; color: string; dashed?: boolean }[] = [
@@ -470,7 +646,7 @@ function Legend() {
     { label: 'Phase 0 Bypass', color: TIER_META.phase0.color, dashed: true },
   ];
   return (
-    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '20px' }}>
+    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'center' }}>
       {items.map((it) => (
         <div key={it.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div style={{ width: '14px', height: '14px', borderRadius: '3px',
@@ -478,11 +654,9 @@ function Legend() {
           <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>{it.label}</span>
         </div>
       ))}
-      <div style={{ marginLeft: '8px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-        {(['implemented', 'stub', 'config', 'phase0'] as NodeStatus[]).map((s) => (
-          <StatusBadge key={s} status={s} />
-        ))}
-      </div>
+      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic', marginLeft: '8px' }}>
+        Click any node to trace its flow
+      </span>
     </div>
   );
 }
@@ -493,73 +667,226 @@ function Legend() {
 
 export function Methodology() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [activePresetIdx, setActivePresetIdx] = useState(0);
+  const [zoom, setZoom] = useState(0.72);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
   const allNodes = [...NODES, ...PHASE0_NODES];
+  const allEdges = EDGES;
+
+  /* Compute active flow nodes */
+  const activeNodes: Set<string> | null = (() => {
+    if (selectedId) return getFlowPath(selectedId, allEdges);
+    const preset = FLOW_PRESETS[activePresetIdx];
+    if (preset.seedNodes.length === 0) return null;
+    return new Set(preset.seedNodes);
+  })();
+
+  const activeEdgeIdxs: Set<number> | null = activeNodes ? getFlowEdges(activeNodes, allEdges) : null;
+
   const selectedNode = allNodes.find((n) => n.id === selectedId) ?? null;
 
-  const handleSelect = useCallback((id: string) => {
+  const handleNodeClick = useCallback((id: string) => {
     setSelectedId((prev) => (prev === id ? null : id));
+    setActivePresetIdx(0);
+  }, []);
+
+  const handlePreset = useCallback((i: number) => {
+    setActivePresetIdx(i);
+    setSelectedId(null);
+  }, []);
+
+  const handleCanvasClick = useCallback(() => {
+    setSelectedId(null);
+    setActivePresetIdx(0);
+  }, []);
+
+  /* Zoom handlers */
+  const handleZoomIn = useCallback(() => setZoom((z) => Math.min(z + 0.1, 1.5)), []);
+  const handleZoomOut = useCallback(() => setZoom((z) => Math.max(z - 0.1, 0.3)), []);
+  const handleFit = useCallback(() => { setZoom(0.72); setPan({ x: 0, y: 0 }); }, []);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    setZoom((z) => Math.max(0.3, Math.min(1.5, z - e.deltaY * 0.001)));
+  }, []);
+
+  /* Pan handlers */
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  }, [pan]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isPanning) return;
+    setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+  }, [isPanning, panStart]);
+
+  const handleMouseUp = useCallback(() => setIsPanning(false), []);
+
+  /* Keyboard: Escape to deselect */
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') { setSelectedId(null); setActivePresetIdx(0); }
   }, []);
 
   const tierNodes = (tier: TierKey) => NODES.filter((n) => n.tier === tier);
 
   return (
-    <div style={{ padding: '24px', paddingRight: selectedNode ? '404px' : '24px', transition: 'padding-right 0.2s ease' }}>
+    <div style={{ padding: '24px', paddingRight: selectedNode ? '404px' : '24px', transition: 'padding-right 0.2s ease' }}
+      onKeyDown={handleKeyDown} tabIndex={0}>
       <PageHeader
         title="Methodology & Data Model"
-        subtitle="Interactive pipeline map — click any node to explore data sources, model functions, and outputs"
+        subtitle="Interactive process flow — click any node to trace data through the pipeline"
       />
 
       <Legend />
 
-      {/* Dot-grid background wrapper */}
-      <div style={{
-        background: 'radial-gradient(circle, var(--border) 0.8px, transparent 0.8px)',
-        backgroundSize: '20px 20px',
-        borderRadius: '12px',
-        padding: '24px',
-        border: '1px solid var(--border)',
-      }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-          {TIER_ORDER.map((tier, i) => (
-            <div key={tier}>
-              <TierRow tierKey={tier} nodes={tierNodes(tier)} selectedId={selectedId} onSelect={handleSelect} />
-              {i < TIER_ORDER.length - 1 && <DownArrow />}
-            </div>
-          ))}
+      <FlowToolbar activePreset={activePresetIdx} onPreset={handlePreset}
+        zoom={zoom} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onFit={handleFit} />
 
-          {/* Phase 0 bypass track */}
-          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '2px dashed var(--accent-amber)' }}>
-            <TierRow tierKey="phase0" nodes={PHASE0_NODES} selectedId={selectedId} onSelect={handleSelect} />
-            <div style={{ marginTop: '10px', padding: '10px 16px', background: 'rgba(237,139,0,0.06)',
-              borderRadius: '6px', border: '1px dashed var(--accent-amber)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--accent-amber)', fontWeight: 600 }}>⚠</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                <strong>Phase 0 bypass active.</strong> The synthetic engine generates shaped trajectories directly from scenario parameters,
-                bypassing real data loaders and model functions. When Phase 1 loaders are implemented, this track will be replaced by the main pipeline above.
-              </span>
-            </div>
-          </div>
+      {/* Canvas container with pan/zoom */}
+      <div
+        style={{
+          borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden',
+          background: 'radial-gradient(circle, var(--border) 0.8px, transparent 0.8px)',
+          backgroundSize: '20px 20px',
+          cursor: isPanning ? 'grabbing' : 'grab',
+          position: 'relative',
+          height: 'calc(100vh - 220px)',
+          minHeight: '500px',
+        }}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onClick={handleCanvasClick}
+      >
+        <div style={{
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+          transformOrigin: '0 0',
+          width: CANVAS_W,
+          height: CANVAS_H,
+          position: 'relative',
+        }}>
+          <svg width={CANVAS_W} height={CANVAS_H} style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 4 L 0 8 z" fill="var(--border-bright)" />
+              </marker>
+              <marker id="arrow-hl" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 4 L 0 8 z" fill="var(--accent)" />
+              </marker>
+              <marker id="arrow-amber" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 4 L 0 8 z" fill="var(--accent-amber)" />
+              </marker>
+            </defs>
+
+            {/* Tier band backgrounds */}
+            {TIER_BANDS.map((b) => {
+              const meta = TIER_META[b.tier];
+              return (
+                <g key={b.tier}>
+                  <rect x={0} y={b.y} width={CANVAS_W - 300} height={b.h} rx={10}
+                    fill={meta.bg} stroke={`${meta.color}20`} strokeWidth={1} />
+                  <text x={14} y={b.y + 18} fontSize={11} fontWeight={700} fill={meta.color}
+                    fontFamily="var(--font-sans)" letterSpacing="0.04em">
+                    {meta.label.toUpperCase()}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Phase 0 column background */}
+            <rect x={1260} y={0} width={320} height={CANVAS_H} rx={10}
+              fill={TIER_META.phase0.bg} stroke="var(--accent-amber)" strokeWidth={1.5}
+              strokeDasharray="8 4" />
+            <text x={1274} y={22} fontSize={11} fontWeight={700} fill="var(--accent-amber)"
+              fontFamily="var(--font-sans)" letterSpacing="0.04em">
+              PHASE 0 — SYNTHETIC BYPASS
+            </text>
+
+            {/* Edges */}
+            {allEdges.map((edge, i) => {
+              const d = bezierPath(edge.from, edge.to);
+              if (!d) return null;
+              const isHighlighted = activeEdgeIdxs === null || activeEdgeIdxs.has(i);
+              const isDimmed = activeEdgeIdxs !== null && !activeEdgeIdxs.has(i);
+              const isPhase0Edge = edge.dashed;
+              return (
+                <path key={i} d={d}
+                  fill="none"
+                  stroke={isHighlighted && isPhase0Edge ? 'var(--accent-amber)'
+                    : isHighlighted ? 'var(--accent)' : 'var(--border-bright)'}
+                  strokeWidth={isHighlighted && activeEdgeIdxs !== null ? 2.5 : 1.2}
+                  strokeDasharray={isPhase0Edge ? '6 4' : undefined}
+                  markerEnd={isHighlighted && isPhase0Edge ? 'url(#arrow-amber)'
+                    : isHighlighted && activeEdgeIdxs !== null ? 'url(#arrow-hl)' : 'url(#arrow)'}
+                  opacity={isDimmed ? 0.1 : 1}
+                  style={{ transition: 'opacity 0.25s ease, stroke 0.25s ease, stroke-width 0.25s ease' }}
+                />
+              );
+            })}
+
+            {/* Edge labels */}
+            {allEdges.map((edge, i) => {
+              if (!edge.label) return null;
+              const from = LAYOUT[edge.from];
+              const to = LAYOUT[edge.to];
+              if (!from || !to) return null;
+              const mx = (from.x + NODE_W / 2 + to.x + NODE_W / 2) / 2;
+              const my = (from.y + NODE_H + to.y) / 2;
+              const isDimmed = activeEdgeIdxs !== null && !activeEdgeIdxs.has(i);
+              return (
+                <text key={`lbl-${i}`} x={mx} y={my - 4} fontSize={9} fill="var(--text-muted)"
+                  textAnchor="middle" fontFamily="var(--font-sans)" fontWeight={500}
+                  opacity={isDimmed ? 0.1 : 0.7}>
+                  {edge.label}
+                </text>
+              );
+            })}
+          </svg>
+
+          {/* Node cards (HTML over SVG) */}
+          {allNodes.map((node) => {
+            const pos = LAYOUT[node.id];
+            if (!pos) return null;
+            const isSelected = selectedId === node.id;
+            const isActive = activeNodes === null || activeNodes.has(node.id);
+            const isDimmed = activeNodes !== null && !activeNodes.has(node.id);
+            return (
+              <div key={node.id} style={{
+                position: 'absolute', left: pos.x, top: pos.y,
+                zIndex: isSelected ? 10 : isActive ? 5 : 1,
+              }}>
+                <CanvasNode node={node} isActive={isActive} isSelected={isSelected}
+                  isDimmed={isDimmed} onClick={() => handleNodeClick(node.id)} />
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Edge summary card */}
-      <Card style={{ marginTop: '24px' }}>
+      {/* Pipeline summary */}
+      <Card style={{ marginTop: '16px' }}>
         <h3 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
           Pipeline Summary
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
           {[
             { label: 'Data Sources', value: tierNodes('sources').length.toString(), sub: `${NODES.filter(n => n.tier === 'sources' && n.status === 'implemented').length} implemented` },
             { label: 'Loaders', value: tierNodes('loaders').length.toString(), sub: `${NODES.filter(n => n.tier === 'loaders' && n.status === 'implemented').length} implemented` },
-            { label: 'Model Functions', value: tierNodes('models').length.toString(), sub: '3 segment tracks + 4 utilities' },
+            { label: 'Model Functions', value: tierNodes('models').length.toString(), sub: '3 tracks + 4 utilities' },
             { label: 'Overlays', value: tierNodes('overlays').length.toString(), sub: 'Carbon + Cost + Reporting' },
             { label: 'Outputs', value: tierNodes('outputs').length.toString(), sub: 'Schema → DuckDB → API' },
-            { label: 'Connections', value: EDGES.length.toString(), sub: `${EDGES.filter(e => e.dashed).length} Phase 0 bypass` },
+            { label: 'Connections', value: allEdges.length.toString(), sub: `${allEdges.filter(e => e.dashed).length} Phase 0 bypass` },
           ].map((kpi) => (
-            <div key={kpi.label} style={{ padding: '12px', background: 'var(--bg-base)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+            <div key={kpi.label} style={{ padding: '10px', background: 'var(--bg-base)', borderRadius: '6px', border: '1px solid var(--border)' }}>
               <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{kpi.label}</div>
-              <div style={{ fontSize: '22px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', margin: '4px 0 2px' }}>{kpi.value}</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', margin: '2px 0' }}>{kpi.value}</div>
               <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{kpi.sub}</div>
             </div>
           ))}
@@ -567,7 +894,7 @@ export function Methodology() {
       </Card>
 
       {/* Detail panel */}
-      {selectedNode && <DetailPanel node={selectedNode} onClose={() => setSelectedId(null)} />}
+      {selectedNode && <DetailPanel node={selectedNode} onClose={() => { setSelectedId(null); setActivePresetIdx(0); }} />}
     </div>
   );
 }
