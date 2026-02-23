@@ -116,8 +116,8 @@ class PipelineEngine(ScenarioEngine):
             from backend.engine.synthetic_engine import SyntheticEngine
             return SyntheticEngine().run(params)
 
-        # Apply filters
-        mask = pd.Series(True, index=df.index)
+        # Apply filters — always exclude burn-in years (pre-2013) from API output
+        mask = df["year"] >= 2013
         if params.geos:
             mask &= df["geo"].isin(params.geos)
         if params.years:

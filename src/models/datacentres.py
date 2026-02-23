@@ -58,10 +58,15 @@ def run_datacentres_model(
 
     rows: list[OutputRow] = []
 
+    # Use the last calibrated (non-forecast) year as the PUE improvement base.
+    # Anchor PUEs are already calibrated per year; improvement should only compound
+    # beyond the last historical anchor, not from the start of the time series.
+    calibrated_mask = gold_df["confidence_tier"].isin([1, 2])
+    base_year = int(gold_df.loc[calibrated_mask, "year"].max()) if calibrated_mask.any() else int(gold_df["year"].min())
+
     for _, row in gold_df.iterrows():
         confidence_tier = int(row.get("confidence_tier", 2))
-        base_year = int(gold_df["year"].min())
-        years_elapsed = int(row["year"]) - base_year
+        years_elapsed = max(0, int(row["year"]) - base_year)
 
         effective_pue = max(1.01, row["pue"] * (1 - pue_improvement_rate) ** years_elapsed)
         effective_utilisation = min(0.95, row["utilisation_rate"] * utilisation_multiplier)

@@ -117,6 +117,40 @@ _DE_DC_ANCHOR: list[dict[str, Any]] = [
     # on-premises: 850 MW × 0.25 × 1.70 × 8760 / 1e6 = 3.16 TWh
     {"year": 2024, "product": "on_premises", "installed_capacity_mw": 850.0, "utilisation_rate": 0.25, "pue": 1.70, "ai_share": 0.02, "confidence_tier": 1},
     # Total: ~15.80 TWh
+
+    # ── 2025–2035: FORECAST — Stobbe 2025 trajectory ─────────────────────────
+    # Stobbe anchors: ~17.5 TWh (2025), ~22.0 TWh (2028), ~24.5 TWh (2030),
+    #                 ~27.0 TWh (2033). Confidence tier 3 (forecast).
+    # Hyperscale grows fastest (AI-driven); on-prem consolidates further.
+    # ── 2025: ~17.5 TWh ──────────────────────────────────────────────────────
+    {"year": 2025, "product": "hyperscale",  "installed_capacity_mw":  950.0, "utilisation_rate": 0.68, "pue": 1.13, "ai_share": 0.35, "confidence_tier": 3},
+    {"year": 2025, "product": "colocation",  "installed_capacity_mw": 1150.0, "utilisation_rate": 0.55, "pue": 1.43, "ai_share": 0.12, "confidence_tier": 3},
+    {"year": 2025, "product": "on_premises", "installed_capacity_mw":  820.0, "utilisation_rate": 0.24, "pue": 1.68, "ai_share": 0.02, "confidence_tier": 3},
+    # Total: ~17.5 TWh
+
+    # ── 2027: ~20.0 TWh ──────────────────────────────────────────────────────
+    {"year": 2027, "product": "hyperscale",  "installed_capacity_mw": 1200.0, "utilisation_rate": 0.70, "pue": 1.12, "ai_share": 0.42, "confidence_tier": 3},
+    {"year": 2027, "product": "colocation",  "installed_capacity_mw": 1300.0, "utilisation_rate": 0.55, "pue": 1.41, "ai_share": 0.15, "confidence_tier": 3},
+    {"year": 2027, "product": "on_premises", "installed_capacity_mw":  780.0, "utilisation_rate": 0.23, "pue": 1.65, "ai_share": 0.02, "confidence_tier": 3},
+    # Total: ~20.0 TWh
+
+    # ── 2030: ~24.5 TWh ──────────────────────────────────────────────────────
+    {"year": 2030, "product": "hyperscale",  "installed_capacity_mw": 1650.0, "utilisation_rate": 0.72, "pue": 1.10, "ai_share": 0.50, "confidence_tier": 3},
+    {"year": 2030, "product": "colocation",  "installed_capacity_mw": 1500.0, "utilisation_rate": 0.55, "pue": 1.38, "ai_share": 0.18, "confidence_tier": 3},
+    {"year": 2030, "product": "on_premises", "installed_capacity_mw":  720.0, "utilisation_rate": 0.22, "pue": 1.62, "ai_share": 0.03, "confidence_tier": 3},
+    # Total: ~24.5 TWh
+
+    # ── 2033: ~27.0 TWh ──────────────────────────────────────────────────────
+    {"year": 2033, "product": "hyperscale",  "installed_capacity_mw": 1950.0, "utilisation_rate": 0.73, "pue": 1.08, "ai_share": 0.55, "confidence_tier": 3},
+    {"year": 2033, "product": "colocation",  "installed_capacity_mw": 1650.0, "utilisation_rate": 0.55, "pue": 1.35, "ai_share": 0.20, "confidence_tier": 3},
+    {"year": 2033, "product": "on_premises", "installed_capacity_mw":  660.0, "utilisation_rate": 0.21, "pue": 1.58, "ai_share": 0.03, "confidence_tier": 3},
+    # Total: ~27.0 TWh
+
+    # ── 2035: ~29.0 TWh (extrapolated beyond Stobbe horizon) ─────────────────
+    {"year": 2035, "product": "hyperscale",  "installed_capacity_mw": 2150.0, "utilisation_rate": 0.74, "pue": 1.07, "ai_share": 0.58, "confidence_tier": 3},
+    {"year": 2035, "product": "colocation",  "installed_capacity_mw": 1750.0, "utilisation_rate": 0.55, "pue": 1.33, "ai_share": 0.22, "confidence_tier": 3},
+    {"year": 2035, "product": "on_premises", "installed_capacity_mw":  620.0, "utilisation_rate": 0.20, "pue": 1.55, "ai_share": 0.03, "confidence_tier": 3},
+    # Total: ~29.0 TWh
 ]
 
 
@@ -137,6 +171,11 @@ _DE_NETWORKS_ANCHOR: dict[str, list[dict[str, Any]]] = {
         {"year": 2022, "equipment_count": 34_200_000, "power_per_unit_w": 10.0, "utilisation_factor": 0.90},
         {"year": 2023, "equipment_count": 34_000_000, "power_per_unit_w": 10.0, "utilisation_factor": 0.90},
         {"year": 2024, "equipment_count": 33_800_000, "power_per_unit_w":  9.5, "utilisation_factor": 0.90},
+        # Forecast: CPE count stable; power per unit declines with fibre/VDSL efficiency
+        {"year": 2027, "equipment_count": 33_500_000, "power_per_unit_w":  9.0, "utilisation_factor": 0.90},
+        {"year": 2030, "equipment_count": 33_200_000, "power_per_unit_w":  8.5, "utilisation_factor": 0.90},
+        {"year": 2033, "equipment_count": 33_000_000, "power_per_unit_w":  8.0, "utilisation_factor": 0.90},
+        {"year": 2035, "equipment_count": 32_800_000, "power_per_unit_w":  7.8, "utilisation_factor": 0.90},
     ],
     "mobile_ran": [
         # Back-calculated to hit Stobbe 2025 segment totals at each anchor year.
@@ -149,6 +188,12 @@ _DE_NETWORKS_ANCHOR: dict[str, list[dict[str, Any]]] = {
         {"year": 2022, "equipment_count": 278_000, "power_per_unit_w": 2_000.0, "utilisation_factor": 0.85},
         {"year": 2023, "equipment_count": 302_000, "power_per_unit_w": 2_000.0, "utilisation_factor": 0.85},
         {"year": 2024, "equipment_count": 320_000, "power_per_unit_w": 2_000.0, "utilisation_factor": 0.85},
+        # Forecast: 5G densification continues; per-site power rises then plateaus
+        # as massive MIMO matures; Stobbe target ~10.3 TWh (2033)
+        {"year": 2027, "equipment_count": 360_000, "power_per_unit_w": 2_100.0, "utilisation_factor": 0.86},
+        {"year": 2030, "equipment_count": 390_000, "power_per_unit_w": 2_150.0, "utilisation_factor": 0.86},
+        {"year": 2033, "equipment_count": 410_000, "power_per_unit_w": 2_200.0, "utilisation_factor": 0.86},
+        {"year": 2035, "equipment_count": 420_000, "power_per_unit_w": 2_200.0, "utilisation_factor": 0.86},
     ],
     "core_backbone": [
         {"year": 2013, "equipment_count":  30_000, "power_per_unit_w": 2_500.0, "utilisation_factor": 0.85},
@@ -157,6 +202,11 @@ _DE_NETWORKS_ANCHOR: dict[str, list[dict[str, Any]]] = {
         {"year": 2022, "equipment_count":  52_000, "power_per_unit_w": 3_000.0, "utilisation_factor": 0.85},
         {"year": 2023, "equipment_count":  55_000, "power_per_unit_w": 3_000.0, "utilisation_factor": 0.85},
         {"year": 2024, "equipment_count":  58_000, "power_per_unit_w": 3_000.0, "utilisation_factor": 0.85},
+        # Forecast: optical transport growth; power per node declines with coherent optics
+        {"year": 2027, "equipment_count":  65_000, "power_per_unit_w": 2_900.0, "utilisation_factor": 0.85},
+        {"year": 2030, "equipment_count":  72_000, "power_per_unit_w": 2_800.0, "utilisation_factor": 0.85},
+        {"year": 2033, "equipment_count":  78_000, "power_per_unit_w": 2_700.0, "utilisation_factor": 0.85},
+        {"year": 2035, "equipment_count":  82_000, "power_per_unit_w": 2_650.0, "utilisation_factor": 0.85},
     ],
 }
 
@@ -201,6 +251,11 @@ _DE_DEVICES_ANCHOR: dict[str, list[dict[str, Any]]] = {
         {"year": 2022, "shipments": 4_800_000, "avg_lifespan_years": 8, "hours_active": 1460, "power_active_w":  67.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 7300, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2023, "shipments": 4_750_000, "avg_lifespan_years": 8, "hours_active": 1460, "power_active_w":  65.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 7300, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2024, "shipments": 4_700_000, "avg_lifespan_years": 8, "hours_active": 1460, "power_active_w":  62.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 7300, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
+        # Forecast: OLED/larger screens push power back up slightly; shipments stable
+        {"year": 2027, "shipments": 4_700_000, "avg_lifespan_years": 8, "hours_active": 1460, "power_active_w":  63.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 7300, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2030, "shipments": 4_750_000, "avg_lifespan_years": 8, "hours_active": 1460, "power_active_w":  65.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 7300, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2033, "shipments": 4_800_000, "avg_lifespan_years": 8, "hours_active": 1460, "power_active_w":  67.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 7300, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2035, "shipments": 4_800_000, "avg_lifespan_years": 8, "hours_active": 1460, "power_active_w":  68.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 7300, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
     ],
     "pc_laptop": [
         {"year": 2002, "shipments": 10_000_000, "avg_lifespan_years": 5, "hours_active": 1825, "power_active_w": 70.0, "hours_idle": 1095, "power_idle_w": 20.0, "hours_sleep": 5840, "power_sleep_w": 3.0, "hours_off": 0, "power_off_w": 0.0},
@@ -226,6 +281,11 @@ _DE_DEVICES_ANCHOR: dict[str, list[dict[str, Any]]] = {
         {"year": 2022, "shipments": 12_000_000, "avg_lifespan_years": 5, "hours_active": 1825, "power_active_w": 27.0, "hours_idle": 1095, "power_idle_w":  8.0, "hours_sleep": 5840, "power_sleep_w": 1.0, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2023, "shipments": 12_000_000, "avg_lifespan_years": 5, "hours_active": 1825, "power_active_w": 25.0, "hours_idle": 1095, "power_idle_w":  8.0, "hours_sleep": 5840, "power_sleep_w": 1.0, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2024, "shipments": 12_000_000, "avg_lifespan_years": 5, "hours_active": 1825, "power_active_w": 23.0, "hours_idle": 1095, "power_idle_w":  7.0, "hours_sleep": 5840, "power_sleep_w": 0.9, "hours_off": 0, "power_off_w": 0.0},
+        # Forecast: AI PCs add ~5W NPU load; efficiency gains partially offset
+        {"year": 2027, "shipments": 12_200_000, "avg_lifespan_years": 5, "hours_active": 1825, "power_active_w": 24.0, "hours_idle": 1095, "power_idle_w":  7.0, "hours_sleep": 5840, "power_sleep_w": 0.9, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2030, "shipments": 12_400_000, "avg_lifespan_years": 5, "hours_active": 1825, "power_active_w": 25.0, "hours_idle": 1095, "power_idle_w":  7.5, "hours_sleep": 5840, "power_sleep_w": 0.9, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2033, "shipments": 12_500_000, "avg_lifespan_years": 5, "hours_active": 1825, "power_active_w": 26.0, "hours_idle": 1095, "power_idle_w":  8.0, "hours_sleep": 5840, "power_sleep_w": 1.0, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2035, "shipments": 12_500_000, "avg_lifespan_years": 5, "hours_active": 1825, "power_active_w": 27.0, "hours_idle": 1095, "power_idle_w":  8.0, "hours_sleep": 5840, "power_sleep_w": 1.0, "hours_off": 0, "power_off_w": 0.0},
     ],
     "networking_stb": [
         {"year": 2002, "shipments": 7_000_000, "avg_lifespan_years": 7, "hours_active": 8760, "power_active_w": 12.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 0, "power_sleep_w": 0.0, "hours_off": 0, "power_off_w": 0.0},
@@ -245,6 +305,11 @@ _DE_DEVICES_ANCHOR: dict[str, list[dict[str, Any]]] = {
         {"year": 2022, "shipments": 9_700_000, "avg_lifespan_years": 7, "hours_active": 8760, "power_active_w": 7.5, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 0, "power_sleep_w": 0.0, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2023, "shipments": 9_700_000, "avg_lifespan_years": 7, "hours_active": 8760, "power_active_w": 7.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 0, "power_sleep_w": 0.0, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2024, "shipments": 9_700_000, "avg_lifespan_years": 7, "hours_active": 8760, "power_active_w": 6.5, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 0, "power_sleep_w": 0.0, "hours_off": 0, "power_off_w": 0.0},
+        # Forecast: Wi-Fi 7 routers ~8W; STB count declines with streaming consolidation
+        {"year": 2027, "shipments": 9_800_000, "avg_lifespan_years": 7, "hours_active": 8760, "power_active_w": 7.0, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 0, "power_sleep_w": 0.0, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2030, "shipments": 9_900_000, "avg_lifespan_years": 7, "hours_active": 8760, "power_active_w": 7.5, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 0, "power_sleep_w": 0.0, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2033, "shipments": 9_900_000, "avg_lifespan_years": 7, "hours_active": 8760, "power_active_w": 7.5, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 0, "power_sleep_w": 0.0, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2035, "shipments": 9_900_000, "avg_lifespan_years": 7, "hours_active": 8760, "power_active_w": 7.5, "hours_idle": 0, "power_idle_w": 0.0, "hours_sleep": 0, "power_sleep_w": 0.0, "hours_off": 0, "power_off_w": 0.0},
     ],
     "smartphones": [
         {"year": 2002, "shipments":  3_000_000, "avg_lifespan_years": 4, "hours_active": 1095, "power_active_w": 4.0, "hours_idle": 1825, "power_idle_w": 0.8, "hours_sleep": 5840, "power_sleep_w": 0.1, "hours_off": 0, "power_off_w": 0.0},
@@ -264,6 +329,11 @@ _DE_DEVICES_ANCHOR: dict[str, list[dict[str, Any]]] = {
         {"year": 2022, "shipments": 24_000_000, "avg_lifespan_years": 4, "hours_active": 1095, "power_active_w": 3.0, "hours_idle": 1825, "power_idle_w": 0.5, "hours_sleep": 5840, "power_sleep_w": 0.05, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2023, "shipments": 24_250_000, "avg_lifespan_years": 4, "hours_active": 1095, "power_active_w": 3.0, "hours_idle": 1825, "power_idle_w": 0.5, "hours_sleep": 5840, "power_sleep_w": 0.05, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2024, "shipments": 24_500_000, "avg_lifespan_years": 4, "hours_active": 1095, "power_active_w": 3.0, "hours_idle": 1825, "power_idle_w": 0.5, "hours_sleep": 5840, "power_sleep_w": 0.05, "hours_off": 0, "power_off_w": 0.0},
+        # Forecast: market saturated; on-device AI adds ~0.5W; efficiency offsets
+        {"year": 2027, "shipments": 24_500_000, "avg_lifespan_years": 4, "hours_active": 1095, "power_active_w": 3.1, "hours_idle": 1825, "power_idle_w": 0.5, "hours_sleep": 5840, "power_sleep_w": 0.05, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2030, "shipments": 24_500_000, "avg_lifespan_years": 4, "hours_active": 1095, "power_active_w": 3.2, "hours_idle": 1825, "power_idle_w": 0.5, "hours_sleep": 5840, "power_sleep_w": 0.05, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2033, "shipments": 24_500_000, "avg_lifespan_years": 4, "hours_active": 1095, "power_active_w": 3.2, "hours_idle": 1825, "power_idle_w": 0.5, "hours_sleep": 5840, "power_sleep_w": 0.05, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2035, "shipments": 24_500_000, "avg_lifespan_years": 4, "hours_active": 1095, "power_active_w": 3.2, "hours_idle": 1825, "power_idle_w": 0.5, "hours_sleep": 5840, "power_sleep_w": 0.05, "hours_off": 0, "power_off_w": 0.0},
     ],
     "gaming": [
         {"year": 2002, "shipments": 1_500_000, "avg_lifespan_years": 6, "hours_active": 730, "power_active_w": 100.0, "hours_idle": 1460, "power_idle_w": 8.0, "hours_sleep": 6570, "power_sleep_w": 1.0, "hours_off": 0, "power_off_w": 0.0},
@@ -283,6 +353,11 @@ _DE_DEVICES_ANCHOR: dict[str, list[dict[str, Any]]] = {
         {"year": 2022, "shipments": 2_500_000, "avg_lifespan_years": 6, "hours_active": 730,  "power_active_w": 120.0, "hours_idle": 1460, "power_idle_w": 5.0, "hours_sleep": 6570, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2023, "shipments": 2_500_000, "avg_lifespan_years": 6, "hours_active": 730,  "power_active_w": 120.0, "hours_idle": 1460, "power_idle_w": 5.0, "hours_sleep": 6570, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
         {"year": 2024, "shipments": 2_600_000, "avg_lifespan_years": 6, "hours_active": 730,  "power_active_w": 120.0, "hours_idle": 1460, "power_idle_w": 5.0, "hours_sleep": 6570, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
+        # Forecast: next-gen consoles ~150W; market grows modestly
+        {"year": 2027, "shipments": 2_700_000, "avg_lifespan_years": 6, "hours_active": 730,  "power_active_w": 130.0, "hours_idle": 1460, "power_idle_w": 5.0, "hours_sleep": 6570, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2030, "shipments": 2_800_000, "avg_lifespan_years": 6, "hours_active": 730,  "power_active_w": 140.0, "hours_idle": 1460, "power_idle_w": 5.0, "hours_sleep": 6570, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2033, "shipments": 2_800_000, "avg_lifespan_years": 6, "hours_active": 730,  "power_active_w": 145.0, "hours_idle": 1460, "power_idle_w": 5.0, "hours_sleep": 6570, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
+        {"year": 2035, "shipments": 2_800_000, "avg_lifespan_years": 6, "hours_active": 730,  "power_active_w": 145.0, "hours_idle": 1460, "power_idle_w": 5.0, "hours_sleep": 6570, "power_sleep_w": 0.5, "hours_off": 0, "power_off_w": 0.0},
     ],
 }
 
@@ -311,7 +386,7 @@ def load_germany_dc_anchor(
         source_id, ingestion_date, version, run_id.
     """
     if years is None:
-        years = list(range(2013, 2025))
+        years = list(range(2013, 2036))
 
     # Group anchor rows by product so we can interpolate per product
     products: dict[str, list[dict[str, Any]]] = {}

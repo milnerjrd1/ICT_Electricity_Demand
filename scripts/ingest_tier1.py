@@ -60,8 +60,8 @@ def parse_args() -> argparse.Namespace:
         "--years",
         nargs="+",
         type=int,
-        default=list(range(2013, 2025)),
-        help="Years to include in DC anchor table (default: 2013-2024)",
+        default=list(range(2013, 2036)),
+        help="Years to include in DC anchor table (default: 2013-2035)",
     )
     return parser.parse_args()
 
@@ -203,13 +203,13 @@ def build_prices_df(geos: list[str], run_id: str) -> pd.DataFrame:
 # The devices model retires shipments from avg_lifespan_years ago; without pre-history
 # the installed base starts at zero and takes lifespan years to reach steady state.
 # Networks uses the same range for consistency.
-_BURNIN_YEARS: list[int] = list(range(2002, 2025))
+_BURNIN_YEARS: list[int] = list(range(2002, 2036))
 
 
 def build_networks_df(geos: list[str], run_id: str, years: list[int]) -> pd.DataFrame:  # noqa: ARG001
     """Build combined networks DataFrame for DE (Stobbe 2025 anchor).
 
-    Always uses the full burn-in range 2002-2024 regardless of the years argument,
+    Always uses the full burn-in + forecast range 2002-2035 regardless of the years argument,
     so that the stock-flow model has sufficient pre-history.
 
     Args:
@@ -228,14 +228,14 @@ def build_networks_df(geos: list[str], run_id: str, years: list[int]) -> pd.Data
         dfs.append(de_df)
 
     combined = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-    logger.info("Networks combined: %d rows (years 2002-2024)", len(combined))
+    logger.info("Networks combined: %d rows (years 2002-2035)", len(combined))
     return combined
 
 
 def build_devices_df(geos: list[str], run_id: str, years: list[int]) -> pd.DataFrame:  # noqa: ARG001
     """Build combined devices DataFrame for DE (Stobbe 2025 anchor).
 
-    Always uses the full burn-in range 2002-2024 regardless of the years argument,
+    Always uses the full burn-in + forecast range 2002-2035 regardless of the years argument,
     so that the stock-flow model has sufficient pre-history.
 
     Args:
