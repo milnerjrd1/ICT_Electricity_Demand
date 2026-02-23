@@ -140,39 +140,44 @@ function ResultsPanel({ result, baselineResult, savedScenarios }: {
 
       <Card>
         <h3 style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Scenario Comparison — Total ICT Electricity</h3>
-        <p style={{ margin: '0 0 16px', fontSize: '11px', color: 'var(--text-secondary)' }}>P50 · TWh</p>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={compData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+        <p style={{ margin: '0 0 16px', fontSize: '11px', color: 'var(--text-secondary)' }}>P50 · TWh · selected years</p>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={compData.filter((d) => [2013,2018,2023,2025,2027,2030,2033,2035].includes(d.year))} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="year" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
-            <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={55} />
+            <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={55} tickFormatter={(v) => `${v}`} />
             <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', borderRadius: '6px', fontSize: '11px' }}
               formatter={(v, name) => [`${Number(v).toLocaleString()} TWh`, String(name)]} />
             {allResults.map((r) => (
-              <Line key={r.label} type="monotone" dataKey={r.label} stroke={r.color} strokeWidth={2} dot={false} />
+              <Bar key={r.label} dataKey={r.label} fill={r.color} radius={[3, 3, 0, 0]} maxBarSize={40} />
             ))}
-          </LineChart>
+          </BarChart>
         </ResponsiveContainer>
       </Card>
 
-      {deltaData.length > 0 && (
-        <Card>
-          <h3 style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Delta vs AI Base — %</h3>
-          <p style={{ margin: '0 0 12px', fontSize: '11px', color: 'var(--text-secondary)' }}>Positive = higher demand than baseline</p>
-          <ResponsiveContainer width="100%" height={150}>
-            <BarChart data={deltaData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="year" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
-              <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={40} tickFormatter={(v) => `${v}%`} />
-              <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', borderRadius: '6px', fontSize: '11px' }}
-                formatter={(v) => [`${Number(v).toFixed(1)}%`, 'Delta']} />
-              <Bar dataKey="delta_pct" radius={[2, 2, 0, 0]}>
-                {deltaData.map((entry, i) => <Cell key={i} fill={entry.delta_pct >= 0 ? 'var(--accent-red)' : 'var(--accent-green)'} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      )}
+      <Card>
+        <h3 style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Delta vs AI Base — %</h3>
+        <p style={{ margin: '0 0 12px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+          {baselineResult ? 'Positive = higher demand than AI Base baseline' : 'Loading baseline…'}
+        </p>
+        <ResponsiveContainer width="100%" height={150}>
+          <BarChart
+            data={deltaData.length > 0 ? deltaData.filter((d) => [2013,2018,2023,2025,2027,2030,2033,2035].includes(d.year)) : []}
+            margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="year" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+            <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={45} tickFormatter={(v) => `${v}%`} />
+            <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', borderRadius: '6px', fontSize: '11px' }}
+              formatter={(v) => [`${Number(v).toFixed(1)}%`, 'Delta vs AI Base']} />
+            <Bar dataKey="delta_pct" radius={[2, 2, 0, 0]} maxBarSize={40}>
+              {(deltaData.filter((d) => [2013,2018,2023,2025,2027,2030,2033,2035].includes(d.year))).map((entry, i) => (
+                <Cell key={i} fill={entry.delta_pct >= 0 ? 'var(--accent-red)' : 'var(--accent-green)'} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
 
       <Card>
         <h3 style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Data Centre Electricity — P10 / P50 / P90</h3>
@@ -243,23 +248,21 @@ function AreaBreakdownPanel({ result, baselineResult }: { result: RunResult; bas
     }).sort((a, b) => b.twh - a.twh);
   }, [result, endYear]);
 
-  const baselineShares = useMemo(() => {
+  const baselineTwhByArea = useMemo(() => {
     if (!baselineResult) return null;
     const enriched = enrichRows(baselineResult.rows);
     const byAreaYear = aggregateByAreaYear(enriched);
-    const totalTwh = APPLICATION_AREAS.reduce((s, a) => s + (byAreaYear[endYear]?.[a] ?? 0), 0);
     const map: Partial<Record<ApplicationArea, number>> = {};
     for (const area of APPLICATION_AREAS) {
-      map[area] = totalTwh > 0 ? (byAreaYear[endYear]?.[area] ?? 0) / totalTwh : 0;
+      map[area] = byAreaYear[endYear]?.[area] ?? 0;
     }
     return map;
   }, [baselineResult, endYear]);
 
-  const barData = areaShares.map(({ area, twh, share }) => ({
+  const barData = areaShares.map(({ area, twh }) => ({
     area: AREA_LABELS[area],
     twh: Math.round(twh * 10) / 10,
-    share_pct: Math.round(share * 1000) / 10,
-    baseline_pct: baselineShares ? Math.round((baselineShares[area] ?? 0) * 1000) / 10 : null,
+    baseline_twh: baselineTwhByArea ? Math.round((baselineTwhByArea[area] ?? 0) * 10) / 10 : null,
     color: AREA_COLORS[area],
   }));
 
@@ -269,27 +272,27 @@ function AreaBreakdownPanel({ result, baselineResult }: { result: RunResult; bas
         Area Breakdown — {endYear}
       </h3>
       <p style={{ margin: '0 0 14px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-        Share of total ICT electricity · Fraunhofer taxonomy{baselineResult ? ' · grey = baseline' : ''}
+        TWh · Fraunhofer taxonomy{baselineResult ? ' · grey = AI Base' : ''}
       </p>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 0 }}>
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 50, bottom: 0, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
           <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }}
-            axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+            axisLine={false} tickLine={false} tickFormatter={(v) => `${v}`} />
           <YAxis type="category" dataKey="area"
             tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--font-sans)' }}
-            axisLine={false} tickLine={false} width={110} />
+            axisLine={false} tickLine={false} width={115} />
           <Tooltip
             contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', borderRadius: '6px', fontSize: '11px' }}
             formatter={(v, name) => [
-              name === 'share_pct' ? `${Number(v).toFixed(1)}% (${barData.find((d) => d.share_pct === v)?.twh ?? ''} TWh)` : `${Number(v).toFixed(1)}%`,
-              name === 'share_pct' ? 'Current' : 'Baseline',
+              `${Number(v).toFixed(1)} TWh`,
+              name === 'twh' ? 'Current' : 'AI Base',
             ]}
           />
           {baselineResult && (
-            <Bar dataKey="baseline_pct" fill="var(--border-bright)" radius={[0, 2, 2, 0]} barSize={4} />
+            <Bar dataKey="baseline_twh" fill="rgba(156,163,175,0.35)" radius={[0, 3, 3, 0]} barSize={6} />
           )}
-          <Bar dataKey="share_pct" radius={[0, 3, 3, 0]} barSize={baselineResult ? 10 : 16}>
+          <Bar dataKey="twh" radius={[0, 4, 4, 0]} barSize={baselineResult ? 14 : 20}>
             {barData.map((d) => <Cell key={d.area} fill={d.color} />)}
           </Bar>
         </BarChart>
@@ -309,13 +312,14 @@ export function ScenarioBuilder() {
   const [showSaveInput, setShowSaveInput] = useState(false);
   const [latestResult, setLatestResult] = useState<RunResult | null>(null);
   const [baselineResult, setBaselineResult] = useState<RunResult | null>(null);
+  const [baselineRunId, setBaselineRunId] = useState<string | null>(null);
   const baselineLoaded = useRef(false);
 
   useEffect(() => {
     if (baselineLoaded.current) return;
     baselineLoaded.current = true;
     createRun.mutateAsync({ scenario_id: 'ai_base', seed: 42 })
-      .then((d) => setLocalRunId(d.run_id))
+      .then((d) => setBaselineRunId(d.run_id))
       .catch(() => { /* baseline failure is non-fatal */ });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -339,10 +343,14 @@ export function ScenarioBuilder() {
   return (
     <div>
       <PageHeader title="SCENARIO BUILDER" subtitle="Configure assumptions · run model · compare outcomes" accent="var(--accent-green)" />
+      {baselineRunId && (
+        <RunWatcher runId={baselineRunId} onDone={(r) => {
+          setBaselineResult(r);
+        }} />
+      )}
       {currentRunId && (
         <RunWatcher runId={currentRunId} onDone={(r) => {
           setLatestResult(r);
-          if (!baselineResult) setBaselineResult(r);
           setIsRunning(false);
         }} />
       )}

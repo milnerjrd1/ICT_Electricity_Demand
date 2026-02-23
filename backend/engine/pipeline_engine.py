@@ -116,6 +116,18 @@ class PipelineEngine(ScenarioEngine):
             from backend.engine.synthetic_engine import SyntheticEngine
             return SyntheticEngine().run(params)
 
+        # Filter to the requested scenario's rows (parquet may contain all scenarios)
+        if "scenario_id" in df.columns and params.scenario_id in df["scenario_id"].values:
+            df = df[df["scenario_id"] == params.scenario_id].copy()
+        elif "scenario_id" in df.columns:
+            # Scenario not in parquet — fall back to synthetic
+            logger.warning(
+                "PipelineEngine: scenario=%s not in parquet, falling back to synthetic",
+                params.scenario_id,
+            )
+            from backend.engine.synthetic_engine import SyntheticEngine
+            return SyntheticEngine().run(params)
+
         # Apply filters — always exclude burn-in years (pre-2013) from API output
         mask = df["year"] >= 2013
         if params.geos:
