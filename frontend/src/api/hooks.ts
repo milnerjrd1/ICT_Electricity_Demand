@@ -1,6 +1,6 @@
 // TanStack Query hooks for all API endpoints
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from './client';
 import type {
   HealthResponse,
@@ -55,13 +55,9 @@ export function useRunStatus(runId: string | null) {
 }
 
 export function useCreateRun() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (params: ScenarioParams) =>
       api.post<{ run_id: string; status: string }>('/runs', params),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['run'] });
-    },
   });
 }
 

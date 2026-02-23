@@ -101,7 +101,7 @@ export function DemandExplorer() {
   return (
     <div>
       <PageHeader title="DEMAND EXPLORER" subtitle="Fraunhofer taxonomy · 5 application areas · product group drill-down" accent="var(--accent-amber)" />
-      {runId && <RunWatcher runId={runId} onDone={(r) => { setResult(r); setIsLoading(false); }} />}
+      {runId && <RunWatcher key={runId} runId={runId} onDone={(r) => { setResult(r); setIsLoading(false); }} />}
 
       <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '20px', alignItems: 'start' }}>
         <Card style={{ padding: '16px' }}>
