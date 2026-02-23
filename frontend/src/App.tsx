@@ -7,6 +7,7 @@ import { Export } from './pages/Export';
 import { MissionControl } from './pages/MissionControl';
 import { ScenarioBuilder } from './pages/ScenarioBuilder';
 import { ScenarioGuide } from './pages/ScenarioGuide';
+import { Methodology } from './pages/Methodology';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/quality" element={<DataQuality />} />
             <Route path="/export" element={<Export />} />
             <Route path="/guide" element={<ScenarioGuide />} />
+            <Route path="/methodology" element={<Methodology />} />
           </Route>
         </Routes>
       </BrowserRouter>
