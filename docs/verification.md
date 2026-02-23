@@ -163,3 +163,35 @@ Calibration targets:
 | Borderstep 2023 (primary) | 18.0 TWh | ±15% | 18.60 TWh (+3.3%) ✓ |
 | BNetzA Monitoring 2023 | 16.5 TWh | ±20% | 18.60 TWh (+12.7%) ✓ |
 | IEA Data Centres 2024 | 19.2 TWh | ±20% | 18.60 TWh (−3.1%) ✓ |
+
+---
+
+## 9. Phase 2 — Tier 1 hotspot calibration
+
+```bash
+# Fixture mode (deterministic, no DuckDB needed — used in CI)
+uv run python scripts/validate_tier1.py --fixture --strict
+# Expected: 8/8 PASS ✓
+
+# Full ingest + pipeline + calibration
+uv run python scripts/ingest_tier1.py --replace
+uv run python scripts/run_pipeline.py --engine v1 --scenario ai_base --skip-diff
+uv run python scripts/validate_tier1.py --strict
+# Expected: all 8 Tier 1 geos within benchmark tolerances
+
+# Ingest a subset of geos
+uv run python scripts/ingest_tier1.py --geos US GB IE --replace
+```
+
+Calibration targets (fixture, deterministic):
+
+| Geo | Target | Tolerance | Source | Fixture result |
+|---|---|---|---|---|
+| DE | 18.0 TWh | ±15% | Borderstep 2023 | 18.60 TWh (+3.3%) ✓ |
+| US | 200.0 TWh | ±20% | IEA 2024; LBNL 2024 | 206.3 TWh (+3.2%) ✓ |
+| GB | 12.0 TWh | ±20% | IEA 2024; techUK 2023 | 12.58 TWh (+4.8%) ✓ |
+| IE | 5.8 TWh | ±15% | EirGrid 2023; CSO Ireland | 5.79 TWh (−0.1%) ✓ |
+| NL | 4.0 TWh | ±20% | CBS Netherlands; DDA 2023 | 4.09 TWh (+2.2%) ✓ |
+| SG | 1.7 TWh | ±20% | EMA Singapore 2023 | 1.75 TWh (+3.2%) ✓ |
+| JP | 15.0 TWh | ±20% | IEA 2024; METI Japan | 15.10 TWh (+0.7%) ✓ |
+| AE | 2.5 TWh | ±25% | DEWA 2023; IEA proxy | 2.54 TWh (+1.5%) ✓ |

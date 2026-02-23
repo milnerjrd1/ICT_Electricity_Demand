@@ -74,3 +74,6 @@ jobs:
 
       - name: Germany DC calibration check (Borderstep 2023 anchor)
         run: uv run python scripts/validate_germany.py --fixture --strict
+
+      - name: Tier 1 hotspot calibration check (all 8 geos, fixture mode)
+        run: uv run python scripts/validate_tier1.py --fixture --strict
