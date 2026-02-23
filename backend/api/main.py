@@ -16,7 +16,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.engine.base import ScenarioEngine
-from backend.engine.synthetic_engine import SyntheticEngine
+from backend.engine.pipeline_engine import PipelineEngine
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -26,9 +26,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ── Engine (swap here for Phase 1) ────────────────────────────────────────────
+# ── Engine ────────────────────────────────────────────────────────────────────
 
-_engine: ScenarioEngine = SyntheticEngine()
+_engine: ScenarioEngine = PipelineEngine()
 
 
 def get_engine() -> ScenarioEngine:
@@ -110,5 +110,5 @@ def health() -> dict[str, str]:
         "status": "ok",
         "model_version": "0.1.0",
         "data_vintage": "2026-02",
-        "engine": "synthetic",
+        "engine": "pipeline",
     }
