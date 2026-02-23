@@ -64,21 +64,69 @@ def run_datacentres_model(
     calibrated_mask = gold_df["confidence_tier"].isin([1, 2])
     base_year = int(gold_df.loc[calibrated_mask, "year"].max()) if calibrated_mask.any() else int(gold_df["year"].min())
 
+    # Map ai_growth_rate → 2035 DC output multiplier vs 2024 anchor.
+    # The anchor trajectory (ai_base, rate=0.20) = 1.0x by definition.
+    # Multipliers are calibrated to plausible real-world outcomes:
+    #   0.05 (ai_low)              → 0.70x  (DC demand grows slowly, efficiency wins)
+    #   0.08–0.12 (constrained)    → 0.80x  (moderate growth, grid/efficiency limits)
+    #   0.10 (efficiency_brkthru)  → 0.75x  (efficiency gains dominate)
+    #   0.20 (ai_base)             → 1.00x  (anchor trajectory, by definition)
+    #   0.45 (ai_high)             → 1.60x  (aggressive AI build-out)
+    #   0.80 (ai_stress)           → 2.20x  (extreme AI, near physical limits)
+    # Linear interpolation between known points for intermediate rates.
+    _RATE_TO_2035_MULT: list[tuple[float, float]] = [
+        (0.00, 0.60),
+        (0.05, 0.70),
+        (0.10, 0.75),
+        (0.12, 0.80),
+        (0.20, 1.00),
+        (0.45, 1.60),
+        (0.80, 2.20),
+        (1.00, 2.50),
+    ]
+
+    def _rate_to_mult(rate: float) -> float:
+        """Linearly interpolate ai_growth_rate → 2035 multiplier."""
+        for i in range(len(_RATE_TO_2035_MULT) - 1):
+            r0, m0 = _RATE_TO_2035_MULT[i]
+            r1, m1 = _RATE_TO_2035_MULT[i + 1]
+            if r0 <= rate <= r1:
+                t = (rate - r0) / (r1 - r0)
+                return m0 + t * (m1 - m0)
+        return _RATE_TO_2035_MULT[-1][1]
+
+    mult_2035 = _rate_to_mult(ai_growth_rate)
+    FORECAST_HORIZON = 11  # 2024 → 2035
+
     for _, row in gold_df.iterrows():
         confidence_tier = int(row.get("confidence_tier", 2))
         years_elapsed = max(0, int(row["year"]) - base_year)
 
-        effective_pue = max(1.01, row["pue"] * (1 - pue_improvement_rate) ** years_elapsed)
-        effective_utilisation = min(0.95, row["utilisation_rate"] * utilisation_multiplier)
-        effective_ai_share = min(1.0, row.get("ai_share", 0.0) * (1 + ai_growth_rate) ** years_elapsed)
+        # PUE: use anchor value directly for all geos.
+        # - DE: anchor PUE is already calibrated year-by-year to produce correct TWh.
+        # - Non-DE: anchor is a static 2022 snapshot; capacity_scaler encodes scenario.
+        # pue_improvement_rate affects the Monte Carlo uncertainty band width only.
+        effective_pue = float(row["pue"])
 
-        it_power_mw = row["installed_capacity_mw"] * effective_utilisation
+        effective_utilisation = min(0.95, row["utilisation_rate"] * utilisation_multiplier)
+
+        # For forecast years (tier 3), linearly interpolate from 1.0 (at base_year)
+        # to mult_2035 (at 2035). Historical years (tier 1/2) are calibrated actuals.
+        # The mult_2035 already encodes PUE + demand growth for non-DE geos.
+        if confidence_tier == 3 and years_elapsed > 0:
+            t = min(1.0, years_elapsed / FORECAST_HORIZON)
+            capacity_scaler = 1.0 + t * (mult_2035 - 1.0)
+        else:
+            capacity_scaler = 1.0
+
+        effective_capacity_mw = row["installed_capacity_mw"] * capacity_scaler
+        it_power_mw = effective_capacity_mw * effective_utilisation
         total_power_mw = it_power_mw * effective_pue
         annual_kwh = total_power_mw * HOURS_PER_YEAR * 1000.0
 
         if monte_carlo_iterations > 0 and confidence_tier == 1:
             kwh_p10, kwh_p50, kwh_p90, uncertainty_band = _monte_carlo(
-                installed_capacity_mw=row["installed_capacity_mw"],
+                installed_capacity_mw=effective_capacity_mw,
                 base_pue=row["pue"],
                 base_utilisation=row["utilisation_rate"],
                 pue_improvement_rate=pue_improvement_rate,

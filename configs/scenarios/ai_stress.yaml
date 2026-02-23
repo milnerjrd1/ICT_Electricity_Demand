@@ -3,13 +3,13 @@ label: "AI Stress"
 family: ai_dc
 
 pue_improvement_rate: 0.005       # Minimal PUE improvement — demand far outpaces efficiency
-utilisation_multiplier: 1.30      # Very high utilisation
-ai_growth_rate: 0.70              # Extreme AI compute growth (70% annual)
-ai_kwh_per_eflop: 0.0015          # Less efficient per EFLOP (rapid hardware scaling)
+utilisation_multiplier: 1.35      # Very high utilisation — capacity fully saturated
+ai_growth_rate: 0.80              # Extreme AI compute growth (80% annual) — AGI-era buildout
+ai_kwh_per_eflop: 0.0018          # Less efficient per EFLOP — brute-force scaling
 
-avg_lifespan_multiplier: 0.90     # Faster device refresh cycle
+avg_lifespan_multiplier: 0.85     # Fast device refresh — AI-capable hardware obsoletes quickly
 
-power_efficiency_factor: 1.10     # Network equipment under strain
+power_efficiency_factor: 1.15     # Network equipment severely strained by traffic surge
 
 placement_shares:
   hyperscale: 0.55

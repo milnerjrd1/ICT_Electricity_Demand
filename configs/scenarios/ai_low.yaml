@@ -2,14 +2,14 @@ scenario_id: ai_low
 label: "AI Low"
 family: ai_dc
 
-pue_improvement_rate: 0.04        # Faster PUE improvement (4% annual)
-utilisation_multiplier: 0.90      # Lower utilisation than baseline
-ai_growth_rate: 0.08              # Conservative AI compute growth (8% annual)
-ai_kwh_per_eflop: 0.0008          # Better efficiency per EFLOP
+pue_improvement_rate: 0.05        # Fast PUE improvement (5% annual) — efficiency-led
+utilisation_multiplier: 0.85      # Lower utilisation — AI demand disappoints
+ai_growth_rate: 0.05              # Weak AI compute growth (5% annual) — regulation/cost barriers
+ai_kwh_per_eflop: 0.0006          # Better efficiency per EFLOP — hardware gains
 
-avg_lifespan_multiplier: 1.1      # Slightly longer device lifespans
+avg_lifespan_multiplier: 1.2      # Longer device lifespans — repair/reuse culture
 
-power_efficiency_factor: 0.95     # Network equipment more efficient
+power_efficiency_factor: 0.85     # Network equipment significantly more efficient
 
 placement_shares:
   hyperscale: 0.45

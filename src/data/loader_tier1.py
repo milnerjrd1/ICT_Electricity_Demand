@@ -259,6 +259,9 @@ def load_tier1_dc_anchor(
     rows: list[dict[str, Any]] = []
     for year in years:
         for dc in anchor:
+            # Forecast years (>2024) are tier 3 — the anchor is a single-point
+            # extrapolation; scenario growth rates should drive differentiation.
+            tier = dc["confidence_tier"] if year <= 2024 else 3
             rows.append({
                 "geo": geo,
                 "year": year,
@@ -267,7 +270,7 @@ def load_tier1_dc_anchor(
                 "utilisation_rate": dc["utilisation_rate"],
                 "pue": dc["pue"],
                 "ai_share": dc["ai_share"],
-                "confidence_tier": dc["confidence_tier"],
+                "confidence_tier": tier,
                 "source_ids": dc["sources"],
                 "source_id": dc["sources"][0],
                 "ingestion_date": date.today().isoformat(),

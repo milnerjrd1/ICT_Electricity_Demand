@@ -2,14 +2,14 @@ scenario_id: efficiency_breakthrough
 label: "Efficiency Breakthrough"
 family: efficiency
 
-pue_improvement_rate: 0.06        # Rapid PUE improvement (6% annual)
-utilisation_multiplier: 0.95      # Slightly lower utilisation
-ai_growth_rate: 0.20              # Same AI growth as baseline
-ai_kwh_per_eflop: 0.0005          # Major efficiency improvement per EFLOP
+pue_improvement_rate: 0.07        # Rapid PUE improvement (7% annual) — liquid cooling, AI-optimised DCs
+utilisation_multiplier: 0.90      # Lower utilisation — smarter workload scheduling
+ai_growth_rate: 0.10              # Moderate AI growth — efficiency gains reduce compute per task
+ai_kwh_per_eflop: 0.0004          # Major efficiency per EFLOP — next-gen chips (Blackwell+)
 
-avg_lifespan_multiplier: 1.15     # Longer device lifespans
+avg_lifespan_multiplier: 1.25     # Much longer device lifespans — right-to-repair, modular design
 
-power_efficiency_factor: 0.80     # Significant network equipment efficiency gains
+power_efficiency_factor: 0.75     # Major network efficiency — optical, sleep modes, AI-managed RAN
 
 placement_shares:
   hyperscale: 0.50

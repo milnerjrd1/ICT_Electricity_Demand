@@ -3,13 +3,13 @@ label: "AI High"
 family: ai_dc
 
 pue_improvement_rate: 0.01        # Slow PUE improvement (1% annual) — demand outpaces efficiency
-utilisation_multiplier: 1.15      # Higher utilisation driven by AI workloads
-ai_growth_rate: 0.40              # Aggressive AI compute growth (40% annual)
-ai_kwh_per_eflop: 0.0012          # Slightly less efficient per EFLOP (older hardware mix)
+utilisation_multiplier: 1.20      # High utilisation — AI workloads fill capacity fast
+ai_growth_rate: 0.45              # Aggressive AI compute growth (45% annual)
+ai_kwh_per_eflop: 0.0013          # Less efficient per EFLOP — rapid scaling, older hardware mix
 
-avg_lifespan_multiplier: 0.95     # Slightly shorter device lifespans (faster refresh)
+avg_lifespan_multiplier: 0.90     # Shorter device lifespans — faster AI-driven refresh cycle
 
-power_efficiency_factor: 1.05     # Network equipment slightly less efficient (higher traffic)
+power_efficiency_factor: 1.10     # Network equipment under strain from traffic growth
 
 placement_shares:
   hyperscale: 0.50

@@ -2,14 +2,14 @@ scenario_id: grid_constrained
 label: "Grid Constrained"
 family: grid
 
-pue_improvement_rate: 0.025       # Faster PUE improvement driven by grid pressure
-utilisation_multiplier: 0.85      # Lower utilisation — grid constraints limit expansion
-ai_growth_rate: 0.15              # AI growth slows due to power availability
-ai_kwh_per_eflop: 0.0009          # Efficiency improves under grid pressure
+pue_improvement_rate: 0.035       # Faster PUE improvement — grid pressure forces efficiency
+utilisation_multiplier: 0.80      # Lower utilisation — grid constraints cap expansion in key markets
+ai_growth_rate: 0.12              # AI growth constrained by power availability (12% annual)
+ai_kwh_per_eflop: 0.0008          # Efficiency improves under grid pressure
 
-avg_lifespan_multiplier: 1.05     # Longer device lifespans (slower refresh)
+avg_lifespan_multiplier: 1.10     # Longer device lifespans — energy cost pressure slows refresh
 
-power_efficiency_factor: 0.90     # Network equipment more efficient under grid pressure
+power_efficiency_factor: 0.88     # Network equipment more efficient under grid pressure
 
 placement_shares:
   hyperscale: 0.40
