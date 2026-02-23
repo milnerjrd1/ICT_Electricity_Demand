@@ -134,3 +134,32 @@ With backend running:
 - Swagger UI: http://localhost:8000/api/v1/docs
 - ReDoc: http://localhost:8000/api/v1/redoc
 - OpenAPI JSON: http://localhost:8000/api/v1/openapi.json
+
+---
+
+## 8. Phase 1 — Germany calibration
+
+```bash
+source .venv/bin/activate
+
+# Fixture mode (deterministic, no DuckDB needed — used in CI)
+uv run python scripts/validate_germany.py --fixture --strict
+# Expected: 18.60 TWh, all 3 checks PASS ✓
+
+# Full ingest + pipeline + calibration (requires DuckDB write access)
+uv run python scripts/ingest_germany.py --replace
+uv run python scripts/run_pipeline.py --engine v1 --scenario ai_base --skip-diff
+uv run python scripts/validate_germany.py --strict
+# Expected: DE DC 2022 within ±15% of 18 TWh
+
+# v2 engine (study-aligned, all demand × grid scenario combinations)
+uv run python scripts/run_pipeline.py --engine v2 --scenario ai_base --skip-diff
+```
+
+Calibration targets:
+
+| Check | Target | Tolerance | Result |
+|---|---|---|---|
+| Borderstep 2023 (primary) | 18.0 TWh | ±15% | 18.60 TWh (+3.3%) ✓ |
+| BNetzA Monitoring 2023 | 16.5 TWh | ±20% | 18.60 TWh (+12.7%) ✓ |
+| IEA Data Centres 2024 | 19.2 TWh | ±20% | 18.60 TWh (−3.1%) ✓ |

@@ -53,11 +53,23 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Validate pipeline structure without running models",
     )
+    parser.add_argument(
+        "--engine",
+        choices=["v1", "v2"],
+        default="v1",
+        help="Model engine: v1 (legacy capacity-MW) or v2 (study-aligned, default: v1)",
+    )
+    parser.add_argument(
+        "--grid-scenario",
+        nargs="+",
+        default=["reference", "ambitious", "fossil"],
+        help="Grid mix scenarios for v2 engine (default: reference ambitious fossil)",
+    )
     return parser.parse_args()
 
 
 def load_gold_tables() -> dict[str, pd.DataFrame]:
-    """Load all available gold tables from DuckDB.
+    """Load all available gold tables from DuckDB (v1 engine keys).
 
     Returns:
         Dict mapping table name → DataFrame. Empty DataFrames for missing tables.
@@ -79,13 +91,49 @@ def load_gold_tables() -> dict[str, pd.DataFrame]:
     return tables
 
 
+def load_gold_tables_v2() -> dict[str, pd.DataFrame]:
+    """Load gold tables for the v2 study-aligned engine.
+
+    Loads v2-specific keys (devices_v2, telecom_networks, datacentres_v2) when
+    available, falling back to legacy keys so Phase 1 data (written under
+    'datacentres', 'grid_ef', 'electricity_prices') is picked up automatically.
+
+    Returns:
+        Dict mapping table name → DataFrame. Empty DataFrames for missing tables.
+    """
+    from src.data.gold_writer import list_gold_tables, read_gold_table
+
+    available = list_gold_tables()
+    logger.info("Available gold tables (v2 load): %s", available)
+
+    tables: dict[str, pd.DataFrame] = {}
+
+    # v2-specific keys (preferred)
+    for name in ["devices_v2", "telecom_networks", "datacentres_v2"]:
+        if name in available:
+            tables[name] = read_gold_table(name)
+            logger.info("Loaded v2 gold table '%s': %d rows", name, len(tables[name]))
+        else:
+            tables[name] = pd.DataFrame()
+
+    # Legacy keys — used as fallback when v2-specific tables are absent
+    for name in ["devices", "networks", "datacentres", "grid_ef", "electricity_prices"]:
+        if name in available:
+            tables[name] = read_gold_table(name)
+            logger.info("Loaded legacy gold table '%s': %d rows", name, len(tables[name]))
+        else:
+            tables[name] = pd.DataFrame()
+
+    return tables
+
+
 def run_models(
     gold_tables: dict[str, pd.DataFrame],
     scenario_ids: list[str],
     run_id: str,
     mc_iterations: int,
 ) -> dict[str, pd.DataFrame]:
-    """Run all model modules for each scenario.
+    """Run all model modules for each scenario (v1 engine).
 
     Args:
         gold_tables: Dict of gold table DataFrames.
@@ -104,6 +152,53 @@ def run_models(
         run_id=run_id,
         monte_carlo_iterations=mc_iterations,
     )
+
+
+def run_models_v2(
+    gold_tables: dict[str, pd.DataFrame],
+    scenario_ids: list[str],
+    run_id: str,
+    grid_scenario_ids: list[str],
+) -> dict[str, pd.DataFrame]:
+    """Run all model modules for each scenario using the v2 study-aligned engine.
+
+    Flattens the nested demand × grid result dict into a single DataFrame per
+    demand scenario (concatenating across grid scenarios) so the rest of the
+    pipeline (validation, diff, save) works unchanged.
+
+    Args:
+        gold_tables: Dict of gold table DataFrames (v2 + legacy keys).
+        scenario_ids: List of demand scenario IDs to run.
+        run_id: UUID for this pipeline run.
+        grid_scenario_ids: Grid mix scenarios to cross with each demand scenario.
+
+    Returns:
+        Dict mapping scenario_id → combined output DataFrame (all grid scenarios).
+    """
+    from src.scenarios.engine import run_all_scenarios_v2
+
+    nested = run_all_scenarios_v2(
+        scenario_ids=scenario_ids,
+        gold_tables=gold_tables,
+        grid_scenario_ids=grid_scenario_ids,
+        run_id=run_id,
+    )
+
+    # Flatten: for each demand scenario, concat outputs across all grid scenarios
+    flat: dict[str, pd.DataFrame] = {}
+    for demand_id, grid_results in nested.items():
+        dfs = [
+            result["outputs"]
+            for result in grid_results.values()
+            if not result["outputs"].empty
+        ]
+        flat[demand_id] = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+        logger.info(
+            "v2 engine: demand='%s' → %d rows across %d grid scenarios",
+            demand_id, len(flat[demand_id]), len(grid_results),
+        )
+
+    return flat
 
 
 def run_validation(results: dict[str, pd.DataFrame]) -> dict[str, list[str]]:
@@ -230,7 +325,7 @@ def main() -> int:
 
     logger.info("=" * 60)
     logger.info("ICT Electricity Demand Pipeline")
-    logger.info("run_id=%s  timestamp=%s", run_id, run_timestamp)
+    logger.info("run_id=%s  timestamp=%s  engine=%s", run_id, run_timestamp, args.engine)
     logger.info("=" * 60)
 
     if args.dry_run:
@@ -249,16 +344,23 @@ def main() -> int:
         scenario_ids = [args.scenario]
     logger.info("Running scenarios: %s", scenario_ids)
 
-    # Load gold tables
-    gold_tables = load_gold_tables()
+    # Load gold tables (v2 loader also picks up legacy keys as fallback)
+    if args.engine == "v2":
+        gold_tables = load_gold_tables_v2()
+    else:
+        gold_tables = load_gold_tables()
+
     all_empty = all(v.empty for v in gold_tables.values())
     if all_empty:
         logger.warning("All gold tables are empty — no real data to model. Exiting.")
-        logger.info("Run data loaders first: uv run python scripts/run_pipeline.py --dry-run")
+        logger.info("Run ingest first: uv run python scripts/ingest_germany.py")
         return 0
 
     # Run models
-    results = run_models(gold_tables, scenario_ids, run_id, args.mc_iterations)
+    if args.engine == "v2":
+        results = run_models_v2(gold_tables, scenario_ids, run_id, args.grid_scenario)
+    else:
+        results = run_models(gold_tables, scenario_ids, run_id, args.mc_iterations)
     row_counts = {k: len(v) for k, v in results.items()}
     logger.info("Model outputs: %s", row_counts)
 
