@@ -382,13 +382,9 @@ export function ScenarioBuilder() {
               min={0} max={0.15} step={0.005} format={(v) => `${(v * 100).toFixed(1)}%`} onChange={(v) => updateParam('pue_improvement_rate', v)} />
             <SliderField label="DC Utilisation" description="multiplier" value={activeParams.utilisation_multiplier ?? 1.0}
               min={0.5} max={2.0} step={0.05} format={(v) => `${v.toFixed(2)}×`} onChange={(v) => updateParam('utilisation_multiplier', v)} />
-            <SliderField label="Hyperscale Share" description="of DC workload" value={activeParams.hyperscale_share ?? 0.45}
-              min={0.1} max={0.9} step={0.05} format={(v) => `${(v * 100).toFixed(0)}%`} onChange={(v) => updateParam('hyperscale_share', v)} />
             <SectionLabel>Devices</SectionLabel>
             <SliderField label="Lifespan Multiplier" description="vs baseline" value={activeParams.avg_lifespan_multiplier ?? 1.0}
               min={0.5} max={2.0} step={0.05} format={(v) => `${v.toFixed(2)}×`} onChange={(v) => updateParam('avg_lifespan_multiplier', v)} />
-            <SliderField label="Shipment Growth" description="annual" value={activeParams.device_shipment_growth ?? 0.01}
-              min={-0.05} max={0.15} step={0.005} format={(v) => `${(v * 100).toFixed(1)}%`} onChange={(v) => updateParam('device_shipment_growth', v)} />
             <SectionLabel>Networks</SectionLabel>
             <SliderField label="Power Efficiency" description="factor" value={activeParams.power_efficiency_factor ?? 1.0}
               min={0.5} max={1.5} step={0.05} format={(v) => `${v.toFixed(2)}×`} onChange={(v) => updateParam('power_efficiency_factor', v)} />

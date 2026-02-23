@@ -15,7 +15,7 @@ import type { ApplicationArea, EnrichedRow } from '../utils/taxonomy';
 
 const ChoroplethMap = lazy(() => import('../components/charts/ChoroplethMap'));
 
-const ALL_GEOS = ['US', 'CN', 'DE', 'JP', 'GB', 'FR', 'IN', 'CA', 'AU', 'NL', 'IE', 'SG', 'KR', 'SE', 'BR', 'AE', 'SA', 'PL', 'MY', 'ZA'];
+const ALL_GEOS = ['US', 'DE', 'JP', 'GB', 'IE', 'NL', 'SG', 'AE'];
 const GEO_COLORS = ['#00D4FF', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#84CC16', '#EC4899', '#14B8A6'];
 const PROD_COLORS = ['#00D4FF', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#84CC16'];
 
@@ -40,7 +40,7 @@ export function DemandExplorer() {
   const { data: scenarioList } = useScenarios();
   const createRun = useCreateRun();
   const [scenarioId, setScenarioId] = useState('ai_base');
-  const [selectedGeos, setSelectedGeos] = useState<string[]>(['US', 'CN', 'DE', 'JP', 'GB', 'IN', 'IE', 'NL', 'SG']);
+  const [selectedGeos, setSelectedGeos] = useState<string[]>(['US', 'DE', 'JP', 'GB', 'IE', 'NL', 'SG', 'AE']);
   const [yearRange, setYearRange] = useState<[number, number]>([2020, 2035]);
   const [activeTab, setActiveTab] = useState<'map' | 'area' | 'change' | 'drilldown' | 'geo'>('area');
   const [drillArea, setDrillArea] = useState<ApplicationArea>('datacentres');

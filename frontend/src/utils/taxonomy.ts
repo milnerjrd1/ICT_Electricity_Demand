@@ -42,33 +42,22 @@ interface TaxonomyMapping {
 }
 
 const LEGACY_MAP: Record<LegacyKey, TaxonomyMapping> = {
-  // devices → households
-  'devices|laptop':      { application_area: 'households',       product_group: 'laptop_hh' },
-  'devices|desktop':     { application_area: 'households',       product_group: 'desktop_hh' },
-  'devices|smartphone':  { application_area: 'households',       product_group: 'smartphone_hh' },
-  'devices|tablet':      { application_area: 'households',       product_group: 'tablet_hh' },
-  'devices|monitor':     { application_area: 'households',       product_group: 'monitor_hh' },
-  // devices → workplace
-  'devices|pc_notebook_wp': { application_area: 'workplace',    product_group: 'pc_notebook_wp' },
-  'devices|printer_mfd_wp': { application_area: 'workplace',    product_group: 'printer_mfd_wp' },
-  'devices|monitor_wp':     { application_area: 'workplace',    product_group: 'monitor_wp' },
-  'devices|telephone_wp':   { application_area: 'workplace',    product_group: 'telephone_wp' },
-  'devices|lan_port_wp':    { application_area: 'workplace',    product_group: 'lan_port_wp' },
-  // networks → telecom_networks
-  'networks|5g_base_station':     { application_area: 'telecom_networks', product_group: 'mobile_access_port' },
-  'networks|4g_base_station':     { application_area: 'telecom_networks', product_group: 'mobile_access_port' },
-  'networks|fixed_broadband_cpe': { application_area: 'telecom_networks', product_group: 'fixed_access_port' },
-  'networks|core_network':        { application_area: 'telecom_networks', product_group: 'core_transport_port' },
-  // datacentres → datacentres
-  'datacentres|hyperscale':   { application_area: 'datacentres', product_group: 'cpu_unit' },
-  'datacentres|sovereign':    { application_area: 'datacentres', product_group: 'cpu_unit' },
-  'datacentres|colocation':   { application_area: 'datacentres', product_group: 'cpu_unit' },
-  'datacentres|on_premises':  { application_area: 'datacentres', product_group: 'cpu_unit' },
-  'datacentres|edge':         { application_area: 'datacentres', product_group: 'cpu_unit' },
-  'datacentres|cpu_unit':     { application_area: 'datacentres', product_group: 'cpu_unit' },
-  'datacentres|hdd_unit':     { application_area: 'datacentres', product_group: 'hdd_unit' },
-  'datacentres|ssd_unit':     { application_area: 'datacentres', product_group: 'ssd_unit' },
-  'datacentres|dc_port_unit': { application_area: 'datacentres', product_group: 'dc_port_unit' },
+  // ── devices (actual products from gold tables) ───────────────────────────
+  'devices|pc_laptop':      { application_area: 'households',       product_group: 'pc_laptop' },
+  'devices|smartphones':    { application_area: 'households',       product_group: 'smartphones' },
+  'devices|tv':             { application_area: 'households',       product_group: 'tv' },
+  'devices|gaming':         { application_area: 'households',       product_group: 'gaming' },
+  'devices|networking_stb': { application_area: 'households',       product_group: 'networking_stb' },
+  // ── networks (actual products from gold tables) ──────────────────────────
+  'networks|mobile_ran':      { application_area: 'telecom_networks', product_group: 'mobile_ran' },
+  'networks|fixed_broadband': { application_area: 'telecom_networks', product_group: 'fixed_broadband' },
+  'networks|core_backbone':   { application_area: 'telecom_networks', product_group: 'core_backbone' },
+  // ── datacentres (actual products from gold tables) ───────────────────────
+  'datacentres|hyperscale':   { application_area: 'datacentres', product_group: 'hyperscale' },
+  'datacentres|colocation':   { application_area: 'datacentres', product_group: 'colocation' },
+  'datacentres|on_premises':  { application_area: 'datacentres', product_group: 'on_premises' },
+  'datacentres|sovereign':    { application_area: 'datacentres', product_group: 'sovereign' },
+  'datacentres|edge':         { application_area: 'datacentres', product_group: 'edge' },
 };
 
 const SEGMENT_FALLBACK: Record<string, ApplicationArea> = {
