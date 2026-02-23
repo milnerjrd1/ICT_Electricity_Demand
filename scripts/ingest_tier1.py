@@ -206,14 +206,75 @@ def build_prices_df(geos: list[str], run_id: str) -> pd.DataFrame:
 _BURNIN_YEARS: list[int] = list(range(2002, 2036))
 
 
-def build_networks_df(geos: list[str], run_id: str, years: list[int]) -> pd.DataFrame:  # noqa: ARG001
-    """Build combined networks DataFrame for DE (Stobbe 2025 anchor).
+# Population ratios vs DE (83.2M) for scaling equipment counts / shipments.
+# Sources: World Bank 2023 population estimates.
+_POP_RATIO_VS_DE: dict[str, float] = {
+    "US": 4.01,   # 334M
+    "GB": 0.81,   # 67.3M
+    "IE": 0.06,   # 5.1M
+    "NL": 0.21,   # 17.6M
+    "SG": 0.07,   # 5.9M
+    "JP": 1.49,   # 124M
+    "AE": 0.11,   # 9.4M
+}
 
-    Always uses the full burn-in + forecast range 2002-2035 regardless of the years argument,
-    so that the stock-flow model has sufficient pre-history.
+
+def _scale_networks_for_geo(
+    de_df: pd.DataFrame, geo: str, run_id: str,
+) -> pd.DataFrame:
+    """Create proxy networks data for a non-DE geo by scaling DE equipment counts.
 
     Args:
-        geos: List of geo ISO codes. Only DE is supported currently.
+        de_df: DE networks gold table.
+        geo: Target ISO code.
+        run_id: UUID string.
+
+    Returns:
+        Proxy DataFrame with same columns as de_df.
+    """
+    ratio = _POP_RATIO_VS_DE.get(geo, 0.5)
+    proxy = de_df.copy()
+    proxy["geo"] = geo
+    proxy["equipment_count"] = (proxy["equipment_count"] * ratio).astype(int)
+    proxy["confidence_tier"] = proxy["year"].apply(lambda y: 3 if y > 2024 else 2)
+    proxy["source_ids"] = [["proxy_from_de_stobbe_2025"]] * len(proxy)
+    proxy["source_id"] = "proxy_from_de_stobbe_2025"
+    proxy["run_id"] = run_id
+    return proxy
+
+
+def _scale_devices_for_geo(
+    de_df: pd.DataFrame, geo: str, run_id: str,
+) -> pd.DataFrame:
+    """Create proxy devices data for a non-DE geo by scaling DE shipments.
+
+    Args:
+        de_df: DE devices gold table.
+        geo: Target ISO code.
+        run_id: UUID string.
+
+    Returns:
+        Proxy DataFrame with same columns as de_df.
+    """
+    ratio = _POP_RATIO_VS_DE.get(geo, 0.5)
+    proxy = de_df.copy()
+    proxy["geo"] = geo
+    proxy["shipments"] = (proxy["shipments"] * ratio).astype(int)
+    proxy["confidence_tier"] = proxy["year"].apply(lambda y: 3 if y > 2024 else 2)
+    proxy["source_ids"] = [["proxy_from_de_stobbe_2025"]] * len(proxy)
+    proxy["source_id"] = "proxy_from_de_stobbe_2025"
+    proxy["run_id"] = run_id
+    return proxy
+
+
+def build_networks_df(geos: list[str], run_id: str, years: list[int]) -> pd.DataFrame:  # noqa: ARG001
+    """Build combined networks DataFrame for all tier-1 geos.
+
+    DE uses Stobbe 2025 anchor. Non-DE geos use population-scaled proxies.
+    Always uses the full burn-in + forecast range 2002-2035.
+
+    Args:
+        geos: List of geo ISO codes.
         run_id: UUID string for the current pipeline run.
         years: Ignored; kept for API compatibility with build_dc_df.
 
@@ -221,25 +282,35 @@ def build_networks_df(geos: list[str], run_id: str, years: list[int]) -> pd.Data
         Combined DataFrame for all supported geos, or empty DataFrame.
     """
     dfs: list[pd.DataFrame] = []
+    de_df: pd.DataFrame | None = None
 
     if "DE" in geos:
         from src.data.loader_eurostat import load_germany_networks_anchor
         de_df = load_germany_networks_anchor(run_id=run_id, years=_BURNIN_YEARS)
         dfs.append(de_df)
 
+    # Scale DE data for non-DE geos
+    if de_df is None:
+        from src.data.loader_eurostat import load_germany_networks_anchor
+        de_df = load_germany_networks_anchor(run_id=run_id, years=_BURNIN_YEARS)
+
+    for geo in geos:
+        if geo != "DE" and geo in _POP_RATIO_VS_DE:
+            dfs.append(_scale_networks_for_geo(de_df, geo, run_id))
+
     combined = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-    logger.info("Networks combined: %d rows (years 2002-2035)", len(combined))
+    logger.info("Networks combined: %d geos, %d rows (years 2002-2035)", combined["geo"].nunique() if not combined.empty else 0, len(combined))
     return combined
 
 
 def build_devices_df(geos: list[str], run_id: str, years: list[int]) -> pd.DataFrame:  # noqa: ARG001
-    """Build combined devices DataFrame for DE (Stobbe 2025 anchor).
+    """Build combined devices DataFrame for all tier-1 geos.
 
-    Always uses the full burn-in + forecast range 2002-2035 regardless of the years argument,
-    so that the stock-flow model has sufficient pre-history.
+    DE uses Stobbe 2025 anchor. Non-DE geos use population-scaled proxies.
+    Always uses the full burn-in + forecast range 2002-2035.
 
     Args:
-        geos: List of geo ISO codes. Only DE is supported currently.
+        geos: List of geo ISO codes.
         run_id: UUID string for the current pipeline run.
         years: Ignored; kept for API compatibility with build_dc_df.
 
@@ -247,14 +318,24 @@ def build_devices_df(geos: list[str], run_id: str, years: list[int]) -> pd.DataF
         Combined DataFrame for all supported geos, or empty DataFrame.
     """
     dfs: list[pd.DataFrame] = []
+    de_df: pd.DataFrame | None = None
 
     if "DE" in geos:
         from src.data.loader_eurostat import load_germany_devices_anchor
         de_df = load_germany_devices_anchor(run_id=run_id, years=_BURNIN_YEARS)
         dfs.append(de_df)
 
+    # Scale DE data for non-DE geos
+    if de_df is None:
+        from src.data.loader_eurostat import load_germany_devices_anchor
+        de_df = load_germany_devices_anchor(run_id=run_id, years=_BURNIN_YEARS)
+
+    for geo in geos:
+        if geo != "DE" and geo in _POP_RATIO_VS_DE:
+            dfs.append(_scale_devices_for_geo(de_df, geo, run_id))
+
     combined = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-    logger.info("Devices combined: %d rows (years 2002-2024)", len(combined))
+    logger.info("Devices combined: %d geos, %d rows (years 2002-2035)", combined["geo"].nunique() if not combined.empty else 0, len(combined))
     return combined
 
 

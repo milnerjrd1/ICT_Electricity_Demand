@@ -65,24 +65,25 @@ def run_datacentres_model(
     base_year = int(gold_df.loc[calibrated_mask, "year"].max()) if calibrated_mask.any() else int(gold_df["year"].min())
 
     # Map ai_growth_rate → 2035 DC output multiplier vs 2024 anchor.
-    # The anchor trajectory (ai_base, rate=0.20) = 1.0x by definition.
-    # Multipliers are calibrated to plausible real-world outcomes:
-    #   0.05 (ai_low)              → 0.70x  (DC demand grows slowly, efficiency wins)
-    #   0.08–0.12 (constrained)    → 0.80x  (moderate growth, grid/efficiency limits)
-    #   0.10 (efficiency_brkthru)  → 0.75x  (efficiency gains dominate)
-    #   0.20 (ai_base)             → 1.00x  (anchor trajectory, by definition)
-    #   0.45 (ai_high)             → 1.60x  (aggressive AI build-out)
-    #   0.80 (ai_stress)           → 2.20x  (extreme AI, near physical limits)
-    # Linear interpolation between known points for intermediate rates.
+    # All multipliers >= 1.0: even conservative scenarios see DC demand grow
+    # due to ongoing digitisation — just slower than baseline.
+    # DE trajectory already has built-in growth via Stobbe anchor; this
+    # multiplier primarily drives non-DE geos (which have flat 2022 anchors).
+    #   0.05 (ai_low)              → 1.05x  (very slow growth, efficiency offsets)
+    #   0.10 (efficiency_brkthru)  → 1.10x  (efficiency gains limit growth)
+    #   0.12 (grid_constrained)    → 1.15x  (grid limits cap expansion)
+    #   0.20 (ai_base)             → 1.30x  (moderate baseline growth)
+    #   0.45 (ai_high)             → 2.00x  (aggressive AI build-out)
+    #   0.80 (ai_stress)           → 3.00x  (extreme AI, near physical limits)
     _RATE_TO_2035_MULT: list[tuple[float, float]] = [
-        (0.00, 0.60),
-        (0.05, 0.70),
-        (0.10, 0.75),
-        (0.12, 0.80),
-        (0.20, 1.00),
-        (0.45, 1.60),
-        (0.80, 2.20),
-        (1.00, 2.50),
+        (0.00, 1.00),
+        (0.05, 1.05),
+        (0.10, 1.10),
+        (0.12, 1.15),
+        (0.20, 1.30),
+        (0.45, 2.00),
+        (0.80, 3.00),
+        (1.00, 3.50),
     ]
 
     def _rate_to_mult(rate: float) -> float:
@@ -110,10 +111,11 @@ def run_datacentres_model(
 
         effective_utilisation = min(0.95, row["utilisation_rate"] * utilisation_multiplier)
 
-        # For forecast years (tier 3), linearly interpolate from 1.0 (at base_year)
-        # to mult_2035 (at 2035). Historical years (tier 1/2) are calibrated actuals.
-        # The mult_2035 already encodes PUE + demand growth for non-DE geos.
-        if confidence_tier == 3 and years_elapsed > 0:
+        # For forecast years (tier 3) of non-DE geos, linearly interpolate from
+        # 1.0 (at base_year) to mult_2035 (at 2035). DE has a year-by-year
+        # calibrated Stobbe trajectory — applying the scaler would double-count.
+        geo = str(row.get("geo", ""))
+        if confidence_tier == 3 and years_elapsed > 0 and geo != "DE":
             t = min(1.0, years_elapsed / FORECAST_HORIZON)
             capacity_scaler = 1.0 + t * (mult_2035 - 1.0)
         else:

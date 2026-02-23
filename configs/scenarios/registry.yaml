@@ -22,41 +22,41 @@ scenarios:
   - id: ai_base
     family: ai_dc
     label: "AI Base"
-    description: "Central AI compute growth trajectory. Hyperscale expansion at historical rates. PUE improves gradually."
+    description: "Central trajectory with 20% annual AI growth. DC capacity grows ~30% by 2035. Moderate PUE improvement."
     color: "#3B82F6"
 
   - id: ai_low
     family: ai_dc
     label: "AI Low"
-    description: "Conservative AI adoption. Efficiency gains outpace demand growth. DC electricity grows slowly."
+    description: "Conservative AI adoption (5% annual growth). DC capacity grows ~5% by 2035. Longer device lifespans reduce churn."
     color: "#10B981"
 
   - id: ai_high
     family: ai_dc
     label: "AI High"
-    description: "Accelerated AI build-out. Hyperscale capacity doubles by 2030. PUE improvements lag demand."
+    description: "Accelerated AI build-out (45% annual growth). DC capacity doubles by 2035. Strong demand across all segments."
     color: "#EF4444"
 
   - id: ai_stress
     family: ai_dc
     label: "AI Stress"
-    description: "Extreme AI demand scenario. Unconstrained compute growth. Grid constraints bind in key markets."
+    description: "Extreme AI demand (80% annual growth). DC capacity triples by 2035. Near physical limits of grid and cooling."
     color: "#7C3AED"
 
   - id: sovereignty_push
     family: sovereignty
     label: "Sovereignty Push"
-    description: "Workload repatriation to national/regional clouds. Higher PUE on-prem. Distributed DC footprint."
+    description: "Workload repatriation drives higher utilisation. Similar growth to baseline but with higher DC load factors."
     color: "#F59E0B"
 
   - id: grid_constrained
     family: grid
     label: "Grid Constrained"
-    description: "Electricity grid constraints limit DC expansion in key markets. Demand growth slows after 2027."
+    description: "Grid bottlenecks limit DC expansion (12% AI growth). Lower utilisation caps. Slowest DC growth after ai_low."
     color: "#6B7280"
 
   - id: efficiency_breakthrough
     family: efficiency
     label: "Efficiency Breakthrough"
-    description: "Rapid PUE improvement and device efficiency gains. Demand growth significantly below baseline."
+    description: "Major efficiency gains across all segments. Slow AI growth (10%), strong network power savings, longer device lifespans."
     color: "#06B6D4"
