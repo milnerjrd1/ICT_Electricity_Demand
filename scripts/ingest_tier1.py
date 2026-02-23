@@ -60,8 +60,8 @@ def parse_args() -> argparse.Namespace:
         "--years",
         nargs="+",
         type=int,
-        default=list(range(2018, 2025)),
-        help="Years to include in DC anchor table (default: 2018-2024)",
+        default=list(range(2013, 2025)),
+        help="Years to include in DC anchor table (default: 2013-2024)",
     )
     return parser.parse_args()
 
@@ -81,7 +81,9 @@ def build_dc_df(geos: list[str], run_id: str, years: list[int]) -> pd.DataFrame:
 
     if "DE" in geos:
         from src.data.loader_eurostat import load_germany_dc_anchor
-        de_df = load_germany_dc_anchor(run_id=run_id, years=years)
+        # Pass None so the loader uses its own default (2013-2024) regardless of --years.
+        # The DC anchor has explicit year-keyed capacity rows; the loader interpolates between them.
+        de_df = load_germany_dc_anchor(run_id=run_id, years=None)
         dfs.append(de_df)
 
     tier1_geos = [g for g in geos if g != "DE"]
