@@ -1,9 +1,9 @@
-"""Pipeline engine — serves real model output from pre-computed parquet files.
+"""Pipeline engine — serves real model output from pre-computed parquet files,
+or runs the live model when custom scenario parameters are provided.
 
-Reads from data/outputs/baseline_latest.parquet (and per-scenario files when
-available). Falls back to SyntheticEngine for scenarios not yet computed.
-
-Swap in via backend/api/main.py — replace SyntheticEngine() with PipelineEngine().
+For pre-computed (default) runs: reads from data/outputs/baseline_latest.parquet.
+For custom runs (slider overrides): loads gold tables from DuckDB and runs the
+scenario engine with the merged params, returning a live result.
 """
 
 from __future__ import annotations
@@ -82,6 +82,169 @@ class PipelineEngine(ScenarioEngine):
         """Clear the parquet cache (call after re-running the pipeline)."""
         self._cache.clear()
 
+    def _load_scenario_defaults(self, scenario_id: str) -> dict[str, Any]:
+        """Load scenario YAML defaults for comparison with request params.
+
+        Args:
+            scenario_id: Scenario identifier.
+
+        Returns:
+            Dict of default param values from the scenario YAML.
+        """
+        scenario_yaml = _CONFIGS_DIR / "scenarios" / f"{scenario_id}.yaml"
+        if scenario_yaml.exists():
+            with open(scenario_yaml) as f:
+                return yaml.safe_load(f) or {}
+        return {}
+
+    def _is_custom_run(self, params: ScenarioParams) -> bool:
+        """Return True if any slider param differs from the scenario's YAML defaults.
+
+        Args:
+            params: Incoming scenario parameters.
+
+        Returns:
+            True if the user has customised any parameter.
+        """
+        defaults = self._load_scenario_defaults(params.scenario_id)
+        _PARAM_KEYS = [
+            "pue_improvement_rate",
+            "utilisation_multiplier",
+            "ai_growth_rate",
+            "avg_lifespan_multiplier",
+            "device_shipment_growth",
+            "power_efficiency_factor",
+        ]
+        for key in _PARAM_KEYS:
+            user_val = getattr(params, key, None)
+            default_val = defaults.get(key)
+            if user_val is not None and default_val is not None:
+                if abs(float(user_val) - float(default_val)) > 1e-6:
+                    logger.info(
+                        "PipelineEngine: custom param %s=%s (default=%s) → live run",
+                        key, user_val, default_val,
+                    )
+                    return True
+        return False
+
+    def _run_live_model(self, params: ScenarioParams, run_id: str) -> RunResult:
+        """Run the live scenario engine with merged params (YAML defaults + overrides).
+
+        Args:
+            params: Scenario parameters including user overrides.
+            run_id: UUID for this run.
+
+        Returns:
+            RunResult from the live model execution.
+        """
+        from src.data.gold_writer import list_gold_tables, read_gold_table
+
+        # Load gold tables from DuckDB
+        available = list_gold_tables()
+        gold_tables: dict[str, pd.DataFrame] = {}
+        for tbl in ["datacentres", "networks", "devices", "grid_ef", "electricity_prices"]:
+            if tbl in available:
+                gold_tables[tbl] = read_gold_table(tbl)
+
+        # Merge YAML defaults with user overrides
+        scenario_params = self._load_scenario_defaults(params.scenario_id)
+        scenario_params["scenario_id"] = params.scenario_id
+        override_keys = [
+            "pue_improvement_rate", "utilisation_multiplier", "ai_growth_rate",
+            "avg_lifespan_multiplier", "device_shipment_growth", "power_efficiency_factor",
+        ]
+        for key in override_keys:
+            val = getattr(params, key, None)
+            if val is not None:
+                scenario_params[key] = val
+
+        logger.info(
+            "PipelineEngine._run_live_model: scenario=%s params=%s",
+            params.scenario_id,
+            {k: scenario_params.get(k) for k in override_keys},
+        )
+
+        from src.models.datacentres import run_datacentres_model
+        from src.models.devices import run_devices_model
+        from src.models.networks import run_networks_model
+        from src.models.carbon import apply_carbon_overlay
+        from src.models.cost import apply_cost_overlay
+
+        segment_dfs: list[pd.DataFrame] = []
+        if "devices" in gold_tables and not gold_tables["devices"].empty:
+            segment_dfs.append(run_devices_model(gold_tables["devices"], scenario_params, run_id=run_id))
+        if "networks" in gold_tables and not gold_tables["networks"].empty:
+            segment_dfs.append(run_networks_model(gold_tables["networks"], scenario_params, run_id=run_id))
+        if "datacentres" in gold_tables and not gold_tables["datacentres"].empty:
+            segment_dfs.append(run_datacentres_model(gold_tables["datacentres"], scenario_params, run_id=run_id, monte_carlo_iterations=0))
+
+        if not segment_dfs:
+            raise RuntimeError("No segment data available for live run")
+
+        df = pd.concat(segment_dfs, ignore_index=True)
+
+        if "grid_ef" in gold_tables and not gold_tables["grid_ef"].empty:
+            df = apply_carbon_overlay(df, gold_tables["grid_ef"])
+        if "electricity_prices" in gold_tables and not gold_tables["electricity_prices"].empty:
+            df = apply_cost_overlay(df, gold_tables["electricity_prices"])
+
+        # Apply year >= 2013 filter
+        df = df[df["year"] >= 2013].copy()
+
+        # Apply scope filters
+        if params.geos:
+            df = df[df["geo"].isin(params.geos)]
+        if params.years:
+            df = df[df["year"].isin(params.years)]
+        if params.segments:
+            df = df[df["segment"].isin(params.segments)]
+
+        rows = [
+            OutputRow(
+                geo=str(r["geo"]),
+                segment=str(r["segment"]),
+                product=str(r.get("product", "unknown")),
+                year=int(r["year"]),
+                kwh_estimate=float(r.get("kwh_estimate", r.get("kwh_p50", 0.0))),
+                kwh_p10=float(r["kwh_p10"]),
+                kwh_p50=float(r["kwh_p50"]),
+                kwh_p90=float(r["kwh_p90"]),
+                confidence_tier=int(r.get("confidence_tier", 2)),
+                uncertainty_band=float(r.get("uncertainty_band", 0.25)),
+                scenario_id=str(r.get("scenario_id", params.scenario_id)),
+                run_id=run_id,
+                source_ids=list(r["source_ids"]) if isinstance(r.get("source_ids"), list) else [],
+                emissions_kgco2e=float(r["emissions_kgco2e"]) if r.get("emissions_kgco2e") is not None else None,
+                cost_usd=float(r["cost_usd"]) if r.get("cost_usd") is not None else None,
+            )
+            for _, r in df.iterrows()
+        ]
+
+        model_card = ModelCard(
+            model_version=MODEL_VERSION,
+            data_vintage=DATA_VINTAGE,
+            engine="pipeline-live",
+            scenario_id=params.scenario_id,
+            assumptions_hash="custom",
+            seed=params.seed,
+            test_status="not_run",
+            inputs_summary={
+                "n_geos": int(df["geo"].nunique()),
+                "n_years": int(df["year"].nunique()),
+                "n_rows": len(df),
+                "source": "live",
+                "overrides": {k: scenario_params.get(k) for k in override_keys},
+            },
+        )
+
+        return RunResult(
+            run_id=run_id,
+            status=RunStatus.done,
+            model_card=model_card,
+            rows=rows,
+            summary=self._build_summary(df, params.scenario_id),
+        )
+
     def run(self, params: ScenarioParams) -> RunResult:
         """Serve real pipeline output for the requested scenario.
 
@@ -104,6 +267,10 @@ class PipelineEngine(ScenarioEngine):
 
         run_id = str(uuid.uuid4())
         logger.info("PipelineEngine.run: scenario=%s run_id=%s", params.scenario_id, run_id)
+
+        # If the user has customised any slider param, run the live model
+        if self._is_custom_run(params):
+            return self._run_live_model(params, run_id)
 
         df = self._load_parquet(params.scenario_id)
 
