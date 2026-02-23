@@ -364,13 +364,35 @@ export function BenchmarkComparison() {
               <YAxis tick={AXIS_TICK} tickFormatter={(v) => `${v}T`} width={50} />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={((value: number | undefined, name: string | undefined) => {
-                  const study = STUDIES.find((s) => s.id === name);
-                  const modelSeg = MODEL_SEGMENTS.find((ms) => ms.key === name);
-                  const label = study ? study.shortLabel : modelSeg ? modelSeg.label : String(name);
-                  return [`${value != null ? Number(value).toFixed(1) : '\u2014'} TWh`, label];
-                }) as any}
+                content={({ active, payload, label: year }) => {
+                  if (!active || !payload || payload.length === 0) return null;
+                  const entries = payload.filter((p) => p.value != null);
+                  if (entries.length === 0) return null;
+                  return (
+                    <div style={{ ...TOOLTIP_STYLE, padding: '8px 12px', minWidth: '220px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px', fontFamily: 'var(--font-mono)' }}>{year}</div>
+                      {entries.map((p) => {
+                        const study = STUDIES.find((s) => s.id === p.dataKey);
+                        const modelSeg = MODEL_SEGMENTS.find((ms) => ms.key === p.dataKey);
+                        const color = study ? study.color : modelSeg ? modelSeg.color : '#888';
+                        const name = study ? study.shortLabel : modelSeg ? modelSeg.label : String(p.dataKey);
+                        const isDashed = !!study;
+                        return (
+                          <div key={String(p.dataKey)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '2px 0' }}>
+                            {isDashed
+                              ? <div style={{ width: '18px', height: '0', borderTop: `2px dashed ${color}`, flexShrink: 0 }} />
+                              : <div style={{ width: '18px', height: '3px', background: color, borderRadius: '2px', flexShrink: 0 }} />
+                            }
+                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', flex: 1, lineHeight: 1.3 }}>{name}</span>
+                            <span style={{ fontSize: '11px', fontWeight: 700, color, fontFamily: 'var(--font-mono)', marginLeft: '6px' }}>
+                              {Number(p.value).toFixed(1)} TWh
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }}
               />
               {MODEL_SEGMENTS.map((ms) => (
                 <Line key={ms.key} dataKey={ms.key} name={ms.key} stroke={ms.color} strokeWidth={2.5} dot={{ r: 4, fill: ms.color }} connectNulls type="monotone" />
