@@ -5,7 +5,6 @@ import { api } from './client';
 import type {
   HealthResponse,
   RunStatusResponse,
-  ScenarioDetail,
   ScenarioMeta,
   ScenarioParams,
 } from '../types/schema';
@@ -26,15 +25,6 @@ export function useScenarios() {
   return useQuery({
     queryKey: ['scenarios'],
     queryFn: () => api.get<ScenarioMeta[]>('/scenarios'),
-    staleTime: 5 * 60_000,
-  });
-}
-
-export function useScenario(id: string | null) {
-  return useQuery({
-    queryKey: ['scenario', id],
-    queryFn: () => api.get<ScenarioDetail>(`/scenarios/${id}`),
-    enabled: !!id,
     staleTime: 5 * 60_000,
   });
 }
@@ -61,12 +51,3 @@ export function useCreateRun() {
   });
 }
 
-// ── Config ─────────────────────────────────────────────────────────────────
-
-export function useAssumptions() {
-  return useQuery({
-    queryKey: ['assumptions'],
-    queryFn: () => api.get<Record<string, unknown>>('/config/assumptions'),
-    staleTime: 10 * 60_000,
-  });
-}

@@ -56,11 +56,6 @@ export interface RunSummary {
   confidence_tier_distribution: Record<string, number>;
 }
 
-export interface RunResponse {
-  run_id: string;
-  status: RunStatus;
-}
-
 export interface RunStatusResponse {
   run_id: string;
   status: RunStatus;
@@ -75,11 +70,6 @@ export interface ScenarioMeta {
   label: string;
   description: string;
   color: string;
-}
-
-export interface ScenarioDetail extends ScenarioMeta {
-  params: Record<string, unknown>;
-  assumption_ranges: Record<string, unknown>;
 }
 
 export interface ScenarioParams {
@@ -97,20 +87,6 @@ export interface ScenarioParams {
   years?: number[] | null;
   segments?: string[] | null;
   seed?: number;
-}
-
-export interface DemandSummary {
-  scenario_id: string;
-  year: number;
-  total_twh: number;
-  dc_twh: number;
-  dc_share: number;
-  devices_twh: number;
-  networks_twh: number;
-  total_emissions_mtco2e: number;
-  total_cost_usd_bn: number;
-  n_geos: number;
-  confidence_tier_distribution: Record<string, number>;
 }
 
 export interface HealthResponse {
