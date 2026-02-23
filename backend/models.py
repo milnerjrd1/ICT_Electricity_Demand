@@ -37,18 +37,18 @@ class ScenarioParams(BaseModel):
     scenario_id: str = Field(..., description="Base scenario identifier (from registry)")
     label: str | None = Field(None, description="Optional custom label for this run")
 
-    # Data centre overrides
-    pue_improvement_rate: float = Field(0.02, ge=0.0, le=0.20, description="Annual PUE improvement rate")
-    utilisation_multiplier: float = Field(1.0, ge=0.5, le=2.0, description="DC utilisation multiplier")
-    ai_growth_rate: float = Field(0.20, ge=0.0, le=1.0, description="Annual AI compute demand growth rate")
-    hyperscale_share: float = Field(0.45, ge=0.0, le=1.0, description="Fraction of DC workload in hyperscale")
+    # Data centre overrides (None = use scenario YAML default)
+    pue_improvement_rate: float | None = Field(None, ge=0.0, le=0.20, description="Annual PUE improvement rate")
+    utilisation_multiplier: float | None = Field(None, ge=0.5, le=2.0, description="DC utilisation multiplier")
+    ai_growth_rate: float | None = Field(None, ge=0.0, le=1.0, description="Annual AI compute demand growth rate")
+    hyperscale_share: float | None = Field(None, ge=0.0, le=1.0, description="Fraction of DC workload in hyperscale")
 
-    # Device overrides
-    avg_lifespan_multiplier: float = Field(1.0, ge=0.5, le=2.0, description="Device lifespan multiplier")
-    device_shipment_growth: float = Field(0.01, ge=-0.10, le=0.20, description="Annual device shipment growth rate")
+    # Device overrides (None = use scenario YAML default)
+    avg_lifespan_multiplier: float | None = Field(None, ge=0.5, le=2.0, description="Device lifespan multiplier")
+    device_shipment_growth: float | None = Field(None, ge=-0.10, le=0.20, description="Annual device shipment growth rate")
 
-    # Network overrides
-    power_efficiency_factor: float = Field(1.0, ge=0.5, le=1.5, description="Network equipment power efficiency factor")
+    # Network overrides (None = use scenario YAML default)
+    power_efficiency_factor: float | None = Field(None, ge=0.5, le=1.5, description="Network equipment power efficiency factor")
 
     # Grid overrides
     grid_carbon_2035_target: float | None = Field(None, ge=0.0, le=1.0, description="Override grid carbon intensity 2035 target (kgCO2e/kWh)")

@@ -106,7 +106,6 @@ class PipelineEngine(ScenarioEngine):
         Returns:
             True if the user has customised any parameter.
         """
-        defaults = self._load_scenario_defaults(params.scenario_id)
         _PARAM_KEYS = [
             "pue_improvement_rate",
             "utilisation_multiplier",
@@ -115,17 +114,20 @@ class PipelineEngine(ScenarioEngine):
             "device_shipment_growth",
             "power_efficiency_factor",
         ]
-        for key in _PARAM_KEYS:
-            user_val = getattr(params, key, None)
-            default_val = defaults.get(key)
-            if user_val is not None and default_val is not None:
-                if abs(float(user_val) - float(default_val)) > 1e-6:
-                    logger.info(
-                        "PipelineEngine: custom param %s=%s (default=%s) → live run",
-                        key, user_val, default_val,
-                    )
-                    return True
-        return False
+        # A run is "custom" only if the user explicitly sent at least one
+        # slider param (i.e. the value is not None).  When MissionControl
+        # sends just {scenario_id, seed}, all slider fields stay None and
+        # we serve the pre-computed parquet instead of running the live model.
+        has_any_explicit = any(
+            getattr(params, key, None) is not None for key in _PARAM_KEYS
+        )
+        if has_any_explicit:
+            logger.info(
+                "PipelineEngine: explicit slider params detected → live run "
+                "(params: %s)",
+                {k: getattr(params, k) for k in _PARAM_KEYS if getattr(params, k) is not None},
+            )
+        return has_any_explicit
 
     def _run_live_model(self, params: ScenarioParams, run_id: str) -> RunResult:
         """Run the live scenario engine with merged params (YAML defaults + overrides).
@@ -305,10 +307,7 @@ class PipelineEngine(ScenarioEngine):
             mask &= df["segment"].isin(params.segments)
         filtered = df[mask].copy()
 
-        # Override scenario_id in output to match what was requested
-        # (baseline parquet has scenario_id='ai_base'; serve it for any scenario
-        # until per-scenario parquets are generated)
-        filtered["scenario_id"] = params.scenario_id
+        # scenario_id is already correct in the parquet (each scenario has its own rows)
 
         rows = [
             OutputRow(
