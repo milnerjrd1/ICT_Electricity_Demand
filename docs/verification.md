@@ -1,16 +1,15 @@
 # Verification Checklist
 
 Run these commands after any significant change to confirm the repo is healthy.  
-All commands assume you are in the repo root: `/Users/jamesmilner/ict-electricity-demand/`
+All commands assume you are in the repo root.
 
 ---
 
 ## 1. Python — syntax + imports
 
 ```bash
-# Compile-check all Python files (catches syntax errors and bad imports)
 source .venv/bin/activate
-python -m compileall backend/ src/ app/ scripts/ -q
+python -m compileall backend/ src/ scripts/ -q
 ```
 
 Expected: no output (silent = pass).
@@ -89,12 +88,14 @@ npm run dev
 ```
 
 Manual checks:
-- [ ] App loads at `http://localhost:5173` — dark navy background, TopBar visible
-- [ ] Mission Control: spinner shows `0/7 scenarios loaded...`, then charts appear
+- [ ] App loads — light background (`#F6F7F9`), TopBar with green accent visible
+- [ ] Mission Control: spinner then fan chart + KPI strip appear
 - [ ] Scenario Builder: select a scenario, move a slider, click **▶ RUN SCENARIO** — results panel populates
-- [ ] Demand Explorer: loads map tab, switches to segment/geo/product tabs
+- [ ] Demand Explorer: area chart loads, switching scenarios updates data
 - [ ] Data Quality: tier cards and heatmap render
 - [ ] Export: KPI cards show, Download CSV buttons are enabled
+- [ ] Scenario Guide: family filter and scenario cards render
+- [ ] Methodology: SVG flow diagram with pan/zoom and flow presets
 - [ ] No red console errors on any page (Plotly chunk warning is acceptable)
 
 ---
@@ -133,15 +134,3 @@ With backend running:
 - Swagger UI: http://localhost:8000/api/v1/docs
 - ReDoc: http://localhost:8000/api/v1/redoc
 - OpenAPI JSON: http://localhost:8000/api/v1/openapi.json
-
----
-
-## 8. Legacy Streamlit (fallback only)
-
-```bash
-source .venv/bin/activate
-streamlit run app/Home.py
-# → http://localhost:8501
-```
-
-Expected: Matrix-themed dashboard loads with stub data.

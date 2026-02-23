@@ -1,8 +1,10 @@
 # Cleanup Report
 
 **Branch:** `chore/debloat-and-docs`  
-**Date:** 2026-02-22  
-**Engineer:** Cascade (automated repo janitor pass)
+**Date:** 2026-02-23 (pass 2)  
+**Engineer:** Cascade (automated repo janitor)
+
+This report covers both the original cleanup pass (2026-02-22) and the second pass (2026-02-23).
 
 ---
 
@@ -16,11 +18,10 @@ ict-electricity-demand/
 │   │   └── routes/           runs.py · scenarios.py · data.py · config.py
 │   ├── engine/
 │   │   ├── base.py           ScenarioEngine ABC
-│   │   ├── synthetic_engine.py  Phase 0 implementation
-│   │   └── pipeline_engine.py   Phase 1+ stub
+│   │   └── synthetic_engine.py  Phase 0 implementation
 │   ├── models.py             Pydantic API contract
 │   └── synthetic.py          Shaped trajectory generator
-├── frontend/                 React 18 + Vite + TypeScript
+├── frontend/                 React 19 + Vite 7 + TypeScript
 │   ├── index.html            ← entrypoint: /src/main.tsx
 │   ├── src/
 │   │   ├── main.tsx          React root mount
@@ -31,7 +32,7 @@ ict-electricity-demand/
 │   │   │   ├── layout/       Shell · TopBar · Sidebar
 │   │   │   └── ui/           Card · Badge · Button · PageHeader
 │   │   ├── pages/            MissionControl · ScenarioBuilder · DemandExplorer
-│   │   │                     DataQuality · Export
+│   │   │                     DataQuality · Export · ScenarioGuide · Methodology
 │   │   ├── store/            scenarioStore.ts (Zustand)
 │   │   └── types/            schema.ts (mirrors backend Pydantic models)
 │   └── vite.config.ts        Tailwind v4 plugin + /api proxy → :8000
@@ -40,7 +41,6 @@ ict-electricity-demand/
 │   ├── models/               Devices · Networks · Data Centres · Schema
 │   ├── scenarios/            Registry + engine
 │   └── validation/           Plausibility + triangulation
-├── app/                      Legacy Streamlit UI (retained as fallback)
 ├── configs/                  YAML assumptions + scenario registry
 ├── scripts/                  run_pipeline.py · generate_release_notes.py
 ├── tests/                    pytest suite mirroring src/
@@ -56,55 +56,82 @@ ict-electricity-demand/
 
 ## Deleted Files
 
+### Pass 1 (2026-02-22)
+
 | File | Reason |
 |---|---|
-| `frontend/src/assets/react.svg` | Vite scaffold boilerplate. Zero imports in any `.tsx`/`.ts` file (confirmed with ripgrep). |
-| `frontend/src/App.css` | Vite scaffold boilerplate. Not imported anywhere — `App.tsx` does not contain `import './App.css'`. All styling is in `index.css`. |
-| `frontend/src/components/charts/DemandFanChart.tsx` | Defined and exported but never imported by any page or component (ripgrep: zero hits for `import.*DemandFanChart`). Superseded by inline chart logic in `MissionControl.tsx`. |
-| `frontend/public/vite.svg` | Vite scaffold favicon. Replaced by inline SVG data URI in `index.html` (a cyan lightning bolt matching the app theme). |
-| `ICT_Electricity_Demand_Programme_Plan_v2.docx` | Binary Word document at repo root. Not referenced in any source file, script, or CI config. Likely an early planning artefact. |
+| `frontend/src/assets/react.svg` | Vite scaffold boilerplate. Zero imports in any `.tsx`/`.ts` file. |
+| `frontend/src/App.css` | Vite scaffold boilerplate. Not imported anywhere. |
+| `frontend/src/components/charts/DemandFanChart.tsx` | Never imported by any page or component. Superseded by inline chart logic in `MissionControl.tsx`. |
+| `frontend/public/vite.svg` | Vite scaffold favicon. Replaced by inline SVG data URI in `index.html`. |
+| `ICT_Electricity_Demand_Programme_Plan_v2.docx` | Binary Word document at repo root. Not referenced anywhere. |
+
+### Pass 2 (2026-02-23)
+
+| File | Reason |
+|---|---|
+| `app/Home.py` | Legacy Streamlit UI — deleted entirely (user decision). Recoverable from git. |
+| `app/pages/1_Explorer.py` | Part of deleted Streamlit app. |
+| `app/pages/2_Scenarios.py` | Part of deleted Streamlit app. |
+| `app/pages/3_Confidence.py` | Part of deleted Streamlit app. |
+| `app/pages/4_Export.py` | Part of deleted Streamlit app. |
+| `app/pages/5_Application_Areas.py` | Part of deleted Streamlit app. |
+| `app/pages/6_Appendix_Export.py` | Part of deleted Streamlit app. |
+| `app/stub_data.py` | Part of deleted Streamlit app. |
+| `app/theme.py` | Part of deleted Streamlit app. |
+| `.streamlit/config.toml` | Only used by the deleted Streamlit app. |
+| `backend/engine/pipeline_engine.py` | 40-line stub raising `NotImplementedError`. Never imported outside its own file. Recoverable from git. |
+| `frontend/src/assets/` (empty dir) | Empty directory, never contained tracked files. |
+
+### Pass 2 — Dead code removed from existing files
+
+| File | What was removed | Evidence |
+|---|---|---|
+| `frontend/src/api/hooks.ts` | `useScenario()` hook | Exported but never imported in any `.tsx` file (0 hits via ripgrep). |
+| `frontend/src/api/hooks.ts` | `useAssumptions()` hook | Exported but never imported in any `.tsx` file (0 hits). |
+| `frontend/src/types/schema.ts` | `DemandSummary` interface | Only defined, never imported (0 hits outside schema.ts). |
+| `frontend/src/types/schema.ts` | `RunResponse` interface | Only defined, never imported (0 hits outside schema.ts). |
+| `frontend/src/types/schema.ts` | `ScenarioDetail` interface | Only imported by the deleted `useScenario` hook. |
 
 ---
 
-## Moved / Renamed Files
-
-None. All remaining files are in their correct locations.
-
----
-
-## Unused Dependencies Removed
+## Dependency Changes
 
 ### Node (`frontend/package.json`)
 
-| Package | Evidence of non-use | Action |
-|---|---|---|
-| `@types/node` (devDep) | No `process.env`, no `node:` imports, no `path`/`fs` usage anywhere in `frontend/src/`. Confirmed with ripgrep. | **Removed** |
+Pass 1 removed `@types/node` (devDep). Pass 2 found no further unused Node dependencies — all current deps are actively imported.
 
 ### Python (`pyproject.toml`)
 
-No Python dependencies were removed. All declared packages are either:
-- Directly imported in `src/`, `backend/`, `app/`, or `scripts/`
-- Transitive dependencies of the above (e.g. `pyarrow` used by DuckDB/pandas interop)
+| Package | Action | Reason |
+|---|---|---|
+| `streamlit>=1.35.0` | Moved to `[project.optional-dependencies.streamlit]` | Not imported by `src/`, `backend/`, `scripts/`, or `tests/`. Only used by deleted `app/`. |
+| `plotly>=5.22.0` | Moved to `[project.optional-dependencies.streamlit]` | Same — only used by deleted `app/`. |
+
+Install with `uv sync --extra streamlit` if needed.
 
 ---
 
-## Deprecations Retained
+## Items Retained
 
 | Item | Why retained |
 |---|---|
-| `app/` (Streamlit UI) | Explicitly required as legacy fallback per cleanup constraints. `app/Home.py`, `app/pages/`, `app/stub_data.py`, `app/theme.py` are all internally consistent and self-contained. Not wired to the new React/FastAPI stack. |
-| `CHANGELOG.md` | Referenced by `.windsurf/workflows/release.md` release workflow. |
-| `frontend/src/components/charts/` directory | Retained — `ChoroplethMap.tsx` is actively used (lazy-loaded in `DemandExplorer.tsx`). |
-| `backend/engine/pipeline_engine.py` | Phase 1+ stub. Intentionally raises `NotImplementedError`. Retained as the documented swap point for the real engine. |
+| `CHANGELOG.md` | Referenced by `.windsurf/workflows/release.md`. |
+| `frontend/src/components/charts/ChoroplethMap.tsx` | Actively used (lazy-loaded in `DemandExplorer.tsx`). |
+| `configs/scenarios/grid_mix_*.yaml` (3 files) | Referenced by `carbon_v2.py` grid scenario logic. Not listed to users but used internally. |
+| `src/models/*_v2.py` files | Active v2 model modules used by `src/scenarios/engine.py`. Not duplicates of v1 — different implementations. |
 
 ---
 
-## Other Fixes Applied
+## Documentation Updated
 
-| Change | Rationale |
+| File | Changes |
 |---|---|
-| `frontend/index.html` title: `"frontend"` → `"ICT Electricity Demand"` | Vite scaffold default title was never updated. |
-| `frontend/index.html` favicon: `vite.svg` → inline SVG data URI | Removes dependency on deleted `public/vite.svg`; uses a cyan lightning bolt matching the app theme. |
+| `README.md` | React 19, Open Sans font, added ScenarioGuide + Methodology pages, removed Streamlit section, updated structure tree. |
+| `frontend/README.md` | Light theme design system, new pages, removed stale `VITE_API_BASE` env var, added font entries. |
+| `backend/README.md` | Removed `pipeline_engine.py` from architecture tree, updated engine swap docs. |
+| `docs/verification.md` | Refreshed with current pages, light theme, accurate commands. |
+| `docs/cleanup_report.md` | This file — updated with pass 2 changes. |
 
 ---
 
