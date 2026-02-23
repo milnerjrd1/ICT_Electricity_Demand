@@ -135,20 +135,16 @@ def _monte_carlo(
     """
     rng = np.random.default_rng()
 
-    pue_samples = rng.triangular(
-        left=base_pue * 0.90,
-        mode=max(1.01, base_pue * (1 - pue_improvement_rate) ** years_elapsed),
-        right=base_pue * 1.10,
-        size=iterations,
-    )
+    pue_mode = max(1.01, base_pue * (1 - pue_improvement_rate) ** years_elapsed)
+    pue_left = min(base_pue * 0.90, pue_mode)
+    pue_right = max(base_pue * 1.10, pue_mode)
+    pue_samples = rng.triangular(left=pue_left, mode=pue_mode, right=pue_right, size=iterations)
     pue_samples = np.maximum(1.01, pue_samples)
 
-    util_samples = rng.triangular(
-        left=base_utilisation * 0.80,
-        mode=min(0.95, base_utilisation * utilisation_multiplier),
-        right=min(0.98, base_utilisation * 1.20),
-        size=iterations,
-    )
+    util_mode = min(0.95, base_utilisation * utilisation_multiplier)
+    util_left = min(base_utilisation * 0.80, util_mode)
+    util_right = max(min(0.98, base_utilisation * 1.20), util_mode)
+    util_samples = rng.triangular(left=util_left, mode=util_mode, right=util_right, size=iterations)
 
     kwh_samples = installed_capacity_mw * util_samples * pue_samples * HOURS_PER_YEAR * 1000.0
 
