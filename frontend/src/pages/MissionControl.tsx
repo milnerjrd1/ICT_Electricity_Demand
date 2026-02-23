@@ -263,18 +263,28 @@ function MissionControlContent({
               label={{ value: 'TWh', angle: -90, position: 'insideLeft', fill: 'var(--text-muted)', fontSize: 11, dy: 20 }}
             />
             <Tooltip
-              contentStyle={{
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border-bright)',
-                borderRadius: '6px',
-                fontSize: '12px',
+              content={({ active, payload, label: year }) => {
+                if (!active || !payload || payload.length === 0) return null;
+                const p50s = payload.filter((p) => String(p.dataKey).endsWith('_p50') && p.value != null);
+                if (p50s.length === 0) return null;
+                return (
+                  <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', borderRadius: '6px', padding: '8px 12px', fontSize: '11px', minWidth: '200px' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px', fontFamily: 'var(--font-mono)' }}>{year}</div>
+                    {p50s.map((p) => {
+                      const sid = String(p.dataKey).replace('_p50', '');
+                      const color = SCENARIO_COLORS[sid] ?? '#888';
+                      const isActive = sid === activeScenarioId;
+                      return (
+                        <div key={sid} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '2px 0', opacity: isActive ? 1 : 0.65 }}>
+                          <div style={{ width: '18px', height: isActive ? '3px' : '2px', background: color, borderRadius: '2px', flexShrink: 0 }} />
+                          <span style={{ flex: 1, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{sid.replace(/_/g, ' ')}</span>
+                          <span style={{ fontWeight: 700, color, fontFamily: 'var(--font-mono)', marginLeft: '6px' }}>{Number(p.value).toLocaleString()} TWh</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
               }}
-              labelStyle={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}
-              itemStyle={{ color: 'var(--text-secondary)' }}
-              formatter={(value, name) => [
-                `${Number(value).toLocaleString()} TWh`,
-                String(name).replace('_p50', '').replace(/_/g, ' '),
-              ]}
             />
 
             {/* P10/P90 band for active scenario */}
@@ -352,8 +362,27 @@ function SegmentBreakdown({ result }: { result: RunResult | undefined }) {
           <XAxis dataKey="year" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
           <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={50} />
           <Tooltip
-            contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', borderRadius: '6px', fontSize: '11px' }}
-            formatter={(v, name) => [`${Number(v).toLocaleString()} TWh`, AREA_LABELS[name as ApplicationArea] ?? String(name)]}
+            content={({ active, payload, label: year }) => {
+              if (!active || !payload || payload.length === 0) return null;
+              const entries = [...payload].reverse().filter((p) => p.value != null && Number(p.value) > 0);
+              if (entries.length === 0) return null;
+              return (
+                <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-bright)', borderRadius: '6px', padding: '8px 12px', fontSize: '11px', minWidth: '190px' }}>
+                  <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px', fontFamily: 'var(--font-mono)' }}>{year}</div>
+                  {entries.map((p) => {
+                    const color = AREA_COLORS[p.dataKey as ApplicationArea] ?? '#888';
+                    const label = AREA_LABELS[p.dataKey as ApplicationArea] ?? String(p.dataKey);
+                    return (
+                      <div key={String(p.dataKey)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '2px 0' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color, flexShrink: 0 }} />
+                        <span style={{ flex: 1, color: 'var(--text-secondary)' }}>{label}</span>
+                        <span style={{ fontWeight: 700, color, fontFamily: 'var(--font-mono)', marginLeft: '6px' }}>{Number(p.value).toLocaleString()} TWh</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            }}
           />
           {APPLICATION_AREAS.map((area) => (
             <Area key={area} type="monotone" dataKey={area} stackId="1"
