@@ -17,6 +17,7 @@ data/raw/
 data/staging/
 data/gold/
 data/outputs/
+!data/outputs/baseline_latest.parquet
 
 # Streamlit — config.toml is tracked; secrets are not
 .streamlit/secrets.toml

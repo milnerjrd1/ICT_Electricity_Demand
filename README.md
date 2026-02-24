@@ -40,51 +40,45 @@ git clone https://github.com/milnerjrd1/ICT_Electricity_Demand.git
 cd ICT_Electricity_Demand
 ```
 
-### 2. Install Python dependencies
+### 2. Quick start (recommended)
+
+The pre-computed baseline parquet is committed to the repo, so you can be up and running
+with a single command:
 
 ```bash
+./scripts/bootstrap.sh --quick
+```
+
+This installs Python and frontend dependencies, and uses the committed
+`data/outputs/baseline_latest.parquet` so the app works immediately.
+
+To **regenerate all data from scratch** (ingest gold tables + run all 7 scenarios), omit
+the flag:
+
+```bash
+./scripts/bootstrap.sh
+```
+
+### 2b. Manual setup (alternative)
+
+If you prefer to run each step yourself:
+
+```bash
+# Install Python dependencies
 uv sync --extra dev
-```
 
-This creates a `.venv/` virtual environment and installs all Python packages (FastAPI, DuckDB,
-pandas, NumPy, SciPy, pytest, ruff, mypy, etc.) from `pyproject.toml`.
+# Install frontend dependencies
+cd frontend && npm install && cd ..
 
-### 3. Install frontend dependencies
-
-```bash
-cd frontend
-npm install
-cd ..
-```
-
-### 4. Ingest the gold data tables
-
-The model reads from a local DuckDB database (`data/gold/ict_demand.duckdb`). Run the ingest
-script once to populate it:
-
-```bash
+# Ingest gold data into DuckDB (only needed if regenerating data)
 uv run python scripts/ingest_tier1.py --replace
+
+# Run the full pipeline — all 7 scenarios (only needed if regenerating data)
+uv run python scripts/run_pipeline.py
 ```
 
-Expected output (last few lines):
-
-```
-INFO ingest_tier1 — Tier 1 ingest complete — datacentres: 168, grid_ef: 56, prices: 56, networks: 69, devices: 115 rows
-```
-
-> **What this does:** Loads calibrated anchor data for Germany (Stobbe et al. 2025) and all
-> Tier 1 geographies into DuckDB gold tables. The `--replace` flag drops and recreates all
-> tables from scratch. Omit it to append new rows only.
-
-### 5. Run the model pipeline (optional but recommended)
-
-```bash
-uv run python scripts/run_pipeline.py --scenario ai_base --skip-diff
-```
-
-This runs the full model for the `ai_base` scenario and writes results to
-`data/outputs/baseline_latest.parquet`. Plausibility warnings are expected for non-DE
-geographies where gold data is sparse.
+> **Note:** The committed `baseline_latest.parquet` means the app works without running the
+> pipeline. Only re-run if you change model code, assumptions, or anchor data.
 
 ---
 
@@ -191,6 +185,7 @@ ICT_Electricity_Demand/
 │   └── scenarios/            Named scenario YAML files + registry.yaml
 │
 ├── scripts/
+│   ├── bootstrap.sh          One-command setup (deps + ingest + pipeline)
 │   ├── ingest_tier1.py       Populate DuckDB gold tables from loaders
 │   ├── run_pipeline.py       Full model pipeline (ingest → model → validate → output)
 │   └── generate_release_notes.py
@@ -198,7 +193,8 @@ ICT_Electricity_Demand/
 ├── tests/                    pytest suite mirroring src/ structure
 ├── data/
 │   ├── gold/                 DuckDB database (git-ignored, created by ingest)
-│   └── outputs/              Pipeline parquet outputs + run log (git-ignored)
+│   └── outputs/              Pipeline parquet outputs + run log
+│       └── baseline_latest.parquet  ← committed (app works out of the box)
 └── docs/                     Methodology docs, assumptions register, data catalogue
 ```
 
@@ -246,6 +242,10 @@ Use `npm install --legacy-peer-deps` or upgrade to Node.js 20+.
 **Pipeline exits with "N plausibility violations — DO NOT PUBLISH"**
 This is expected for non-DE geographies where anchor data is sparse. The model still produces
 output; violations are logged to `data/outputs/run_log.jsonl` for review.
+
+**Mission Control shows 0 / stale data after pulling latest code**
+The committed `baseline_latest.parquet` should work immediately. If you see zeros, regenerate:
+`./scripts/bootstrap.sh`
 
 ---
 
